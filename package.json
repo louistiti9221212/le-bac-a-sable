@@ -1,0 +1,16 @@
+{
+  "name": "le-bac-a-sable-multijoueur",
+  "version": "1.0.0",
+  "description": "Jeu de petit bac multijoueur avec Express et Socket.IO",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1"
+  }
+}
