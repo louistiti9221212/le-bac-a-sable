@@ -6,106 +6,71 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ALPHA BLITZ — Le Bac à Sable</title>
 <style>
-:root {
-  --bg:#f6f4ff; --card:#fff; --ink:#282644;
-  --muted:#77758f; --purple:#7767ee; --pink:#ffb9d0;
-  --green:#bcebd7; --border:#e9e5f6; --red:#d94b65;
-}
+:root{--bg:#f6f4ff;--card:#fff;--ink:#282644;--muted:#77758f;--purple:#7767ee;--pink:#ffb9d0;--green:#bcebd7;--border:#e9e5f6;--red:#d94b65}
 *{box-sizing:border-box}
-body{
-  margin:0;background:var(--bg);color:var(--ink);
-  font-family:Inter,system-ui,-apple-system,sans-serif;
-}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif}
 button,input,select{font:inherit}
-button{
-  border:0;border-radius:13px;padding:13px 17px;
-  cursor:pointer;font-weight:750;transition:.15s;
-}
-button:hover{filter:brightness(.97);transform:translateY(-1px)}
-button:disabled{opacity:.45;cursor:not-allowed;transform:none}
+button{border:0;border-radius:13px;padding:12px 16px;cursor:pointer;font-weight:750}
+button:hover{filter:brightness(.97)}
+button:disabled{opacity:.45;cursor:not-allowed}
 .primary{background:var(--purple);color:white}
 .secondary{background:#eeebff;color:#5548c7}
 .soft{background:#f4f2fa;color:var(--ink)}
 .danger{background:#ffe5eb;color:#a62c48}
-input,select{
-  width:100%;padding:13px;border:1px solid var(--border);
-  border-radius:12px;background:white;color:var(--ink);
-  outline-color:var(--purple);min-width:0;
-}
+input,select{width:100%;padding:12px;border:1px solid var(--border);border-radius:12px;background:white;color:var(--ink);min-width:0}
 label{font-size:13px;color:var(--muted);font-weight:700}
 .app{max-width:960px;margin:auto;padding:22px 16px 50px}
-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:25px}
+header,.row{display:flex;align-items:center;gap:10px}
+header{justify-content:space-between;margin-bottom:24px}
 .brand{display:flex;align-items:center;gap:11px}
-.logo{
-  width:46px;height:46px;border-radius:15px;background:var(--purple);
-  display:grid;place-items:center;color:white;font-weight:950;font-size:21px;
-}
-h1{font-size:20px;margin:0;letter-spacing:-.5px}
-.subtitle{font-size:12px;color:var(--muted);margin-top:3px}
+.logo{width:46px;height:46px;border-radius:15px;background:var(--purple);display:grid;place-items:center;color:white;font-weight:950;font-size:21px}
+h1{font-size:20px;margin:0}
+.subtitle,.small{font-size:12px;color:var(--muted)}
+.subtitle{margin-top:3px}
 .pill{font-size:12px;border-radius:99px;background:#eeeafc;padding:8px 11px}
 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#e8a53c;margin-right:6px}
 .dot.online{background:#37b987}
 .view{display:none}
-.view.active{display:block;animation:appear .22s ease}
-@keyframes appear{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
-.hero{text-align:center;padding:32px 8px 28px}
-.hero h2{font-size:clamp(32px,7vw,53px);line-height:1.05;letter-spacing:-2px;margin:10px 0}
+.view.active{display:block}
+.hero{text-align:center;padding:30px 8px}
+.hero h2{font-size:clamp(32px,7vw,53px);line-height:1.05;margin:12px 0;letter-spacing:-2px}
 .hero p{color:var(--muted);line-height:1.6;max-width:470px;margin:12px auto}
 .tag{display:inline-block;background:#fff0f5;border-radius:99px;padding:7px 12px;font-size:12px;font-weight:800;color:#a84d75}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:22px;padding:22px;box-shadow:0 7px 24px #4e3a7b08}
 .card h3{margin:0 0 8px;font-size:19px}
-.card p{margin:0 0 17px;color:var(--muted);font-size:13px;line-height:1.5}
+.card p{margin:0 0 14px;color:var(--muted);font-size:13px;line-height:1.5}
 .stack{display:grid;gap:12px}
-.row{display:flex;align-items:center;gap:10px}
 .between{justify-content:space-between}
 .grow{flex:1;min-width:0}
-.small{font-size:12px;color:var(--muted)}
-.notice{padding:13px 15px;border-radius:13px;background:#eeebff;font-size:13px;line-height:1.5;margin:14px 0}
+.notice{padding:12px 14px;border-radius:13px;background:#eeebff;font-size:13px;line-height:1.5;margin:12px 0}
 .notice.error{background:#ffebef;color:#a52d47}
 .notice.success{background:#e3f8ee;color:#176c4a}
 .notice:empty{display:none}
-.section-title{font-size:23px;letter-spacing:-.7px;margin:10px 0 5px}
+.section-title{font-size:23px;margin:6px 0}
 .panel{margin-top:15px}
-.code{
-  font-size:clamp(30px,8vw,43px);font-weight:950;letter-spacing:8px;
-  text-align:center;background:#f0edff;padding:18px;border-radius:16px;
-}
+.code{font-size:clamp(30px,8vw,43px);font-weight:950;letter-spacing:8px;text-align:center;background:#f0edff;padding:18px;border-radius:16px}
 .player-list{display:grid;gap:9px;margin:14px 0}
-.player{
-  background:#faf9ff;border:1px solid var(--border);padding:12px;
-  border-radius:13px;display:flex;align-items:center;gap:10px;
-}
-.avatar{
-  width:37px;height:37px;border-radius:12px;background:#e8e2ff;
-  display:grid;place-items:center;font-weight:900;color:#5c4fd0;
-}
+.player{background:#faf9ff;border:1px solid var(--border);padding:12px;border-radius:13px;display:flex;align-items:center;gap:10px}
+.avatar{width:37px;height:37px;border-radius:12px;background:#e8e2ff;display:grid;place-items:center;font-weight:900;color:#5c4fd0}
 .player-name{font-weight:750}
 .host{font-size:11px;color:#6a59d4;background:#ece8ff;padding:5px 7px;border-radius:8px}
-.letter{
-  font-size:72px;font-weight:1000;text-align:center;
-  color:var(--purple);line-height:1.15;
-}
+.letter{font-size:72px;font-weight:1000;text-align:center;color:var(--purple);line-height:1.15}
 .timer{text-align:center;font-weight:900;font-size:32px;font-variant-numeric:tabular-nums}
 .progress{height:8px;background:#eeeaf8;border-radius:20px;overflow:hidden;margin:10px 0 18px}
-.progress div{height:100%;width:100%;background:var(--purple);transition:width .2s linear}
+.progress div{height:100%;width:100%;background:var(--purple)}
 .answers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .answer{display:grid;gap:7px}
 .answer label{color:var(--ink)}
 .score-row{display:grid;grid-template-columns:1fr auto;gap:10px;padding:13px;border-bottom:1px solid var(--border)}
-.score-row:last-child{border:0}
 .chat-box{height:170px;overflow:auto;background:#faf9ff;border-radius:13px;padding:10px;display:flex;flex-direction:column;gap:8px}
 .chat-message{font-size:13px;overflow-wrap:anywhere}
 .chat-message b{color:#6455ce}
+.shop-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.shop-item{border:1px solid var(--border);border-radius:12px;padding:12px;background:#faf9ff}
+.shop-item p{margin:7px 0;font-size:12px}
 footer{text-align:center;color:var(--muted);font-size:12px;margin-top:25px}
-@media(max-width:600px){
- .grid,.answers{grid-template-columns:1fr}
- .card{padding:17px}
- .app{padding:15px 12px 35px}
- header{margin-bottom:14px}
- .hero{padding:24px 5px}
- .code{letter-spacing:5px}
-}
+@media(max-width:600px){.grid,.answers,.shop-grid{grid-template-columns:1fr}.card{padding:17px}.app{padding:15px 12px 35px}.hero{padding:24px 5px}.code{letter-spacing:5px}}
 </style>
 </head>
 <body>
@@ -118,7 +83,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;margin-top:25px}
   <div class="pill"><span id="connectionDot" class="dot"></span><span id="connectionText">Connexion...</span></div>
 </header>
 
-<div id="globalNotice" class="notice"></div>
+<div id="globalNotice" class="notice" role="status"></div>
 
 <section id="home" class="view active">
   <div class="hero">
@@ -129,22 +94,34 @@ footer{text-align:center;color:var(--muted);font-size:12px;margin-top:25px}
   <div class="grid">
     <div class="card stack">
       <h3>✨ Créer une salle</h3>
-      <p>Crée une vraie salle en ligne et invite tes amis avec un code.</p>
+      <p>Crée une salle en ligne et invite tes amis avec un code.</p>
       <label for="nickname">Ton pseudo</label>
       <input id="nickname" maxlength="18" placeholder="Ex. Alex" autocomplete="nickname">
-      <button id="createBtn" class="primary">Créer ma salle</button>
+      <label for="maxRounds">Nombre de manches</label>
+      <select id="maxRounds">
+        <option value="3">3 manches</option>
+        <option value="5" selected>5 manches</option>
+        <option value="10">10 manches</option>
+      </select>
+      <label for="duration">Durée d'une manche</label>
+      <select id="duration">
+        <option value="45">45 secondes</option>
+        <option value="60">60 secondes</option>
+        <option value="90">90 secondes</option>
+        <option value="180" selected>180 secondes</option>
+      </select>
+      <button id="createBtn" class="primary" disabled>Créer ma salle</button>
     </div>
     <div class="card stack">
       <h3>🚀 Rejoindre une salle</h3>
       <p>Entre le code de ton ami pour rejoindre sa partie.</p>
       <label for="joinNickname">Ton pseudo</label>
-      <input id="joinNickname" maxlength="18" placeholder="Ex. Sam" autocomplete="nickname">
+      <input id="joinNickname" maxlength="18" placeholder="Ex. Sam">
       <label for="roomCode">Code de la salle</label>
       <input id="roomCode" maxlength="6" placeholder="ABC123" style="text-transform:uppercase">
-      <button id="joinBtn" class="secondary">Rejoindre la salle</button>
+      <button id="joinBtn" class="secondary" disabled>Rejoindre la salle</button>
     </div>
   </div>
-  <div class="notice">Les salles sont enregistrées dans Firebase. Si Firebase n'est pas configuré ou si la salle n'existe pas, le jeu affichera une erreur au lieu de créer une fausse salle.</div>
 </section>
 
 <section id="lobby" class="view">
@@ -158,14 +135,9 @@ footer{text-align:center;color:var(--muted);font-size:12px;margin-top:25px}
     <button id="copyBtn" class="secondary">Copier le code</button>
     <div class="row between"><h3>Joueurs</h3><span id="playerCount" class="pill">0 joueur</span></div>
     <div id="players" class="player-list"></div>
-    <label for="duration">Durée de la manche</label>
-    <select id="duration">
-      <option value="45">45 secondes</option>
-      <option value="60" selected>60 secondes</option>
-      <option value="90">90 secondes</option>
-    </select>
+    <button id="readyBtn" class="secondary">Je suis prêt ✓</button>
     <button id="startBtn" class="primary" disabled>Lancer la partie</button>
-    <div class="small">Seul l'hôte peut lancer la partie. Deux joueurs minimum sont nécessaires.</div>
+    <div class="small">Deux joueurs minimum sont nécessaires. Seul l'hôte peut lancer.</div>
   </div>
 </section>
 
@@ -176,12 +148,25 @@ footer{text-align:center;color:var(--muted);font-size:12px;margin-top:25px}
   </div>
   <div class="card panel">
     <div class="small" style="text-align:center">LA LETTRE DU TOUR</div>
-    <div id="letter" class="letter">A</div>
-    <div id="timer" class="timer">--:--</div>
+    <div id="letter" class="letter">?</div>
+    <div id="timer" class="timer">--</div>
     <div class="progress"><div id="progressBar"></div></div>
     <div id="answers" class="answers"></div>
-    <div class="notice" id="submitNotice"></div>
+    <div id="submitNotice" class="notice"></div>
     <button id="submitBtn" class="primary" style="width:100%;margin-top:16px">Valider mes réponses</button>
+  </div>
+  <div class="card panel stack">
+    <h3>🛍️ Boutique de pouvoirs</h3>
+    <p>Achète des pouvoirs avec tes pièces.</p>
+    <div id="wallet" class="small">Pièces : 50</div>
+    <div id="shop" class="shop-grid"></div>
+    <label for="powerTarget">Joueur ciblé (pour certains pouvoirs)</label>
+    <select id="powerTarget"></select>
+    <label for="inventory">Ton inventaire</label>
+    <select id="inventory"></select>
+    <input id="privateText" maxlength="180" placeholder="Message privé ou indice...">
+    <button id="usePowerBtn" class="secondary">Utiliser le pouvoir choisi</button>
+    <div id="powerNotice" class="notice"></div>
   </div>
 </section>
 
@@ -189,12 +174,25 @@ footer{text-align:center;color:var(--muted);font-size:12px;margin-top:25px}
   <div class="hero">
     <span class="tag">🏆 Manche terminée</span>
     <h2>Les résultats</h2>
-    <p>Découvre les scores de la salle.</p>
+    <p id="resultSubtitle">Découvre les scores de la salle.</p>
   </div>
   <div class="card">
     <div id="scores"></div>
-    <button id="nextBtn" class="primary" style="width:100%;margin-top:15px" disabled>Retour au salon</button>
+    <div id="resultDetails"></div>
+    <button id="nextBtn" class="primary" style="width:100%;margin-top:15px" disabled>Manche suivante</button>
     <div id="resultNotice" class="notice"></div>
+  </div>
+</section>
+
+<section id="finished" class="view">
+  <div class="hero">
+    <span class="tag">🏆 Partie terminée</span>
+    <h2>Fin de partie !</h2>
+    <p>Voici le classement final.</p>
+  </div>
+  <div class="card">
+    <div id="finalScores"></div>
+    <button id="backHomeBtn" class="primary" style="width:100%;margin-top:15px">Retour à l'accueil</button>
   </div>
 </section>
 
@@ -202,51 +200,29 @@ footer{text-align:center;color:var(--muted);font-size:12px;margin-top:25px}
   <h3>💬 Chat de la salle</h3>
   <div id="chatMessages" class="chat-box"></div>
   <form id="chatForm" class="row" style="margin-top:10px">
-    <input id="chatInput" maxlength="200" placeholder="Écris un message..." aria-label="Message">
+    <input id="chatInput" maxlength="180" placeholder="Écris un message..." aria-label="Message">
     <button class="secondary" type="submit">Envoyer</button>
   </form>
+  <div id="privateMessages" class="notice"></div>
 </section>
 <footer>ALPHA BLITZ · Une partie entre amis</footer>
 </div>
 
-<!-- Firebase SDK officiel, version compat pour garder un fichier HTML unique. -->
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script src="/socket.io/socket.io.js"></script>
 <script>
 "use strict";
 
-/*
-  ÉTAPE OBLIGATOIRE :
-  Remplace les valeurs ci-dessous par la configuration de TON application
-  Web Firebase (Console Firebase > Paramètres du projet > Vos applications).
-
-  Ce sont des valeurs de configuration client, pas une clé de compte de service.
-*/
-const firebaseConfig = {
-  apiKey: "REMPLACE_PAR_TON_API_KEY",
-  authDomain: "REMPLACE_PAR_TON_PROJET.firebaseapp.com",
-  databaseURL: "https://REMPLACE_PAR_TON_PROJET-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "REMPLACE_PAR_TON_PROJET",
-  appId: "REMPLACE_PAR_TON_APP_ID"
-};
-
 const $ = id => document.getElementById(id);
-const categories = [
-  "Prénom","Ville","Pays","Animal","Objet",
-  "Métier","Aliment","Sport","Célébrité","Marque"
-];
-const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const MAX_PLAYERS = 8;
-const ROOM_LIFETIME = 4 * 60 * 60 * 1000;
-
-let db = null, auth = null, uid = null;
-let currentRoom = null, roomData = null, roomRef = null;
-let roomListener = null, chatListener = null, presenceRef = null;
-let presenceDisconnect = null, timerInterval = null, unsubAuth = null;
-let submitted = false, changingRoom = false;
-let lastGameId = null, shownGameId = null;
-let locallyExpiredGame = null;
+const socket = io({ reconnection: true });
+let myPlayerId = null;
+let currentRoom = null;
+let state = null;
+let categories = [];
+let powers = [];
+let submitted = false;
+let timerInterval = null;
+let lastResults = null;
+let myReady = true;
 
 function notice(message, type = "") {
   const el = $("globalNotice");
@@ -262,238 +238,52 @@ function showView(name) {
   document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
   $(name).classList.add("active");
 }
-function setConnection(ok, text) {
-  $("connectionDot").className = "dot" + (ok ? " online" : "");
-  $("connectionText").textContent = text;
-}
-function randomCode() {
-  // Code généré pour la lisibilité ; la transaction Firebase garantit
-  // qu'on ne remplace pas une salle existante.
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let code = "";
-  for (let i = 0; i < 6; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return code;
-}
 function cleanName(value) {
   return String(value || "").trim().replace(/\s+/g, " ").slice(0,18);
 }
 function validName(value) {
   return value.length >= 2 && /^[\p{L}\p{N}_ -]+$/u.test(value);
 }
-function roomPath(code) {
-  return "rooms/" + code;
+function getName(id) {
+  const p = state?.players?.find(x => x.id === id);
+  return p ? p.name : "Joueur";
 }
-function serverNow() {
-  // Utilisé seulement pour les affichages. Le temps de départ commun
-  // est stocké dans Firebase.
-  return Date.now();
+function isHost() {
+  return !!state && state.hostId === myPlayerId;
 }
-function escapeKey(value) {
-  return String(value).replace(/[.#$/\[\]]/g, "_");
+function me() {
+  return state?.players?.find(p => p.id === myPlayerId);
 }
-function requireReady() {
-  if (!db || !auth || !uid) {
-    throw new Error("Firebase n'est pas prêt. Vérifie ta configuration et ta connexion.");
-  }
-}
-function firebaseConfigured() {
-  return firebaseConfig.apiKey &&
-    !firebaseConfig.apiKey.startsWith("REMPLACE") &&
-    firebaseConfig.projectId &&
-    !firebaseConfig.projectId.startsWith("REMPLACE") &&
-    firebaseConfig.appId &&
-    !firebaseConfig.appId.startsWith("REMPLACE") &&
-    firebaseConfig.databaseURL &&
-    !firebaseConfig.databaseURL.includes("REMPLACE");
-}
-
-async function init() {
-  if (!firebaseConfigured()) {
-    setConnection(false, "Configuration requise");
-    notice("Firebase n'est pas configuré. Remplace les valeurs de firebaseConfig par celles de ton projet pour utiliser les vraies salles.", "error");
-    $("createBtn").disabled = true;
-    $("joinBtn").disabled = true;
-    return;
-  }
-
-  try {
-    firebase.initializeApp(firebaseConfig);
-    auth = firebase.auth();
-    db = firebase.database();
-
-    db.ref(".info/connected").on("value", snap => {
-      const connected = snap.val() === true;
-      setConnection(connected, connected ? "En ligne" : "Hors ligne");
-      if (!connected) notice("Connexion à Firebase perdue. Les actions en ligne peuvent échouer.", "error");
-      else if ($("globalNotice").textContent.startsWith("Connexion à Firebase perdue")) notice("");
-    });
-
-    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-    await auth.signInAnonymously();
-    uid = auth.currentUser.uid;
-    setConnection(true, "En ligne");
-    notice("");
-    $("createBtn").disabled = false;
-    $("joinBtn").disabled = false;
-    $("nickname").value = localStorage.getItem("alphaBlitzName") || "";
-    $("joinNickname").value = $("nickname").value;
-  } catch (error) {
-    console.error(error);
-    setConnection(false, "Erreur Firebase");
-    notice("Impossible de se connecter à Firebase. Vérifie que l'authentification anonyme est activée, que Realtime Database existe et que les règles autorisent les opérations nécessaires.", "error");
-  }
-}
-
-async function saveName(value) {
-  const name = cleanName(value);
-  if (!validName(name)) {
-    throw new Error("Choisis un pseudo de 2 à 18 caractères : lettres, chiffres, espaces, tirets ou soulignements.");
-  }
+function emitCreate() {
+  if (!socket.connected) return notice("Connexion au serveur impossible. Réessaie dans quelques secondes.", "error");
+  const name = cleanName($("nickname").value);
+  if (!validName(name)) return notice("Choisis un pseudo de 2 à 18 caractères.", "error");
   localStorage.setItem("alphaBlitzName", name);
-  return name;
+  $("createBtn").disabled = true;
+  socket.emit("room:create", {
+    name,
+    maxRounds: Number($("maxRounds").value),
+    duration: Number($("duration").value)
+  });
 }
-
-async function createRoom() {
-  try {
-    requireReady();
-    if (currentRoom) throw new Error("Quitte ta salle actuelle avant d'en créer une autre.");
-    const name = await saveName($("nickname").value);
-    $("createBtn").disabled = true;
-    let created = false, code = null;
-
-    for (let attempt = 0; attempt < 8; attempt++) {
-      const candidate = randomCode();
-      const ref = db.ref(roomPath(candidate));
-      const result = await ref.transaction(existing => {
-        if (existing !== null) return;
-        return {
-          code: candidate,
-          host: uid,
-          status: "lobby",
-          createdAt: firebase.database.ServerValue.TIMESTAMP,
-          updatedAt: firebase.database.ServerValue.TIMESTAMP,
-          duration: 60,
-          round: 0,
-          players: {
-            [uid]: {
-              name,
-              joinedAt: firebase.database.ServerValue.TIMESTAMP,
-              connected: true,
-              score: 0
-            }
-          },
-          game: null,
-          chat: null
-        };
-      }, undefined, false);
-
-      if (result.committed) {
-        code = candidate;
-        created = true;
-        break;
-      }
-    }
-    if (!created) throw new Error("Impossible de générer un code disponible. Réessaie.");
-    await enterRoom(code);
-  } catch (error) {
-    console.error(error);
-    notice(error.message || "Impossible de créer la salle.", "error");
-  } finally {
-    $("createBtn").disabled = false;
-  }
+function emitJoin() {
+  if (!socket.connected) return notice("Connexion au serveur impossible. Réessaie dans quelques secondes.", "error");
+  const name = cleanName($("joinNickname").value);
+  const code = $("roomCode").value.trim().toUpperCase();
+  if (!validName(name)) return notice("Choisis un pseudo de 2 à 18 caractères.", "error");
+  if (!/^[A-F0-9]{6}$/.test(code)) return notice("Le code doit contenir 6 caractères hexadécimaux.", "error");
+  localStorage.setItem("alphaBlitzName", name);
+  $("joinBtn").disabled = true;
+  socket.emit("room:join", { name, code });
 }
-
-async function joinRoom() {
-  try {
-    requireReady();
-    if (currentRoom) throw new Error("Quitte ta salle actuelle avant d'en rejoindre une autre.");
-    const name = await saveName($("joinNickname").value);
-    const code = $("roomCode").value.trim().toUpperCase();
-    if (!/^[A-HJ-NP-Z2-9]{6}$/.test(code)) throw new Error("Le code doit contenir 6 caractères.");
-    $("joinBtn").disabled = true;
-
-    const ref = db.ref(roomPath(code));
-    const result = await ref.transaction(room => {
-      if (!room || room.status !== "lobby") return;
-      room.players = room.players || {};
-      if (room.players[uid]) {
-        room.players[uid].name = name;
-        room.players[uid].connected = true;
-        return room;
-      }
-      const active = Object.values(room.players).filter(p => p && p.connected === true).length;
-      if (active >= MAX_PLAYERS) return;
-      room.players[uid] = {
-        name,
-        joinedAt: firebase.database.ServerValue.TIMESTAMP,
-        connected: true,
-        score: 0
-      };
-      room.updatedAt = firebase.database.ServerValue.TIMESTAMP;
-      return room;
-    }, undefined, false);
-
-    if (!result.committed) {
-      const snap = await ref.once("value");
-      if (!snap.exists()) throw new Error("Salle introuvable. Vérifie le code.");
-      if (snap.val().status !== "lobby") throw new Error("Cette partie a déjà commencé ou est terminée.");
-      throw new Error("La salle est pleine ou l'accès a été refusé par Firebase.");
-    }
-    await enterRoom(code);
-  } catch (error) {
-    console.error(error);
-    notice(error.message || "Impossible de rejoindre cette salle.", "error");
-  } finally {
-    $("joinBtn").disabled = false;
-  }
-}
-
-async function enterRoom(code) {
-  requireReady();
-  await cleanupRoomListeners(false);
-  currentRoom = code;
-  roomRef = db.ref(roomPath(code));
-  presenceRef = roomRef.child("players/" + uid + "/connected");
-
-  try {
-    await presenceRef.set(true);
-    presenceDisconnect = presenceRef.onDisconnect();
-    await presenceDisconnect.remove();
-
-    roomListener = roomRef.on("value", snap => {
-      if (!snap.exists()) {
-        notice("Cette salle n'existe plus.", "error");
-        cleanupRoomListeners(false).finally(() => showView("home"));
-        return;
-      }
-      roomData = snap.val();
-      renderRoom();
-    }, error => {
-      console.error(error);
-      notice("Impossible de lire cette salle. Vérifie les règles Firebase.", "error");
-    });
-
-    chatListener = roomRef.child("chat").limitToLast(40).on("value", snap => renderChat(snap.val() || {}));
-    $("chatSection").style.display = "block";
-    notice("");
-    showView("lobby");
-  } catch (error) {
-    await cleanupRoomListeners(false);
-    throw error;
-  }
-}
-
 function renderRoom() {
-  if (!roomData || !currentRoom) return;
-  $("lobbyCode").textContent = currentRoom;
-  const players = roomData.players || {};
-  const connected = Object.entries(players).filter(([id,p]) => p && p.connected === true);
-  $("playerCount").textContent = connected.length + (connected.length > 1 ? " joueurs" : " joueur");
-
+  if (!state) return;
+  $("lobbyCode").textContent = state.code || "------";
+  const players = state.players || [];
+  $("playerCount").textContent = players.length + (players.length > 1 ? " joueurs" : " joueur");
   $("players").replaceChildren();
-  connected.sort((a,b) => (a[1].joinedAt || 0) - (b[1].joinedAt || 0)).forEach(([id,p]) => {
+
+  players.forEach(p => {
     const row = document.createElement("div");
     row.className = "player";
     const avatar = document.createElement("div");
@@ -501,368 +291,355 @@ function renderRoom() {
     avatar.textContent = (p.name || "?").charAt(0).toUpperCase();
     const details = document.createElement("div");
     details.className = "grow";
-    const playerName = document.createElement("div");
-    playerName.className = "player-name";
-    playerName.textContent = p.name || "Joueur";
+    const name = document.createElement("div");
+    name.className = "player-name";
+    name.textContent = p.name;
     const status = document.createElement("div");
     status.className = "small";
-    status.textContent = "Connecté";
-    details.append(playerName,status);
+    status.textContent = p.ready ? "Prêt" : "En attente";
+    details.append(name,status);
     row.append(avatar,details);
-    if (id === roomData.host) {
-      const host = document.createElement("span");
-      host.className = "host";
-      host.textContent = "Hôte";
-      row.append(host);
+    if (p.host) {
+      const badge = document.createElement("span");
+      badge.className = "host";
+      badge.textContent = "Hôte";
+      row.append(badge);
     }
     $("players").append(row);
   });
 
-  const isHost = roomData.host === uid;
-  $("duration").disabled = !isHost || roomData.status !== "lobby";
-  $("startBtn").style.display = roomData.status === "lobby" ? "block" : "none";
-  $("startBtn").disabled = !isHost || connected.length < 2;
-  $("startBtn").textContent = isHost ? "Lancer la partie" : "En attente de l'hôte...";
-  if (roomData.status === "lobby") showView("lobby");
-  else if (roomData.status === "playing") {
+  $("readyBtn").style.display = state.status === "lobby" ? "block" : "none";
+  $("startBtn").style.display = state.status === "lobby" ? "block" : "none";
+  $("startBtn").disabled = !isHost() || players.length < 2;
+  $("startBtn").textContent = !isHost() ? "En attente de l'hôte..." : players.length < 2 ? "En attente de joueurs..." : "Lancer la partie";
+
+  if (state.status === "lobby") showView("lobby");
+  else if (state.status === "countdown") {
+    showView("game");
+    $("letter").textContent = "…";
+    $("timer").textContent = "Prépare-toi !";
+    $("answers").replaceChildren();
+    $("submitBtn").disabled = true;
+    $("roundLabel").textContent = "MANCHE " + state.round;
+  } else if (state.status === "playing") {
     showView("game");
     renderGame();
-  } else if (roomData.status === "results") {
+  } else if (state.status === "results") {
     showView("results");
     renderResults();
+  } else if (state.status === "finished") {
+    showView("finished");
+    renderFinalScores();
   }
+  renderShop();
 }
-
-function pickLetter() {
-  return alphabet[Math.floor(Math.random() * alphabet.length)];
-}
-
-async function startGame() {
-  try {
-    requireReady();
-    if (!roomRef || !roomData || roomData.host !== uid) throw new Error("Seul l'hôte peut lancer la partie.");
-    const duration = Number($("duration").value);
-    if (![45,60,90].includes(duration)) throw new Error("Durée incorrecte.");
-
-    const gameId = db.ref().push().key;
-    const startAt = Date.now() + 4000;
-    const result = await roomRef.transaction(room => {
-      if (!room || room.status !== "lobby" || room.host !== uid) return;
-      const players = Object.values(room.players || {}).filter(p => p && p.connected === true);
-      if (players.length < 2) return;
-      room.status = "playing";
-      room.duration = duration;
-      room.round = (room.round || 0) + 1;
-      room.game = {
-        id: gameId,
-        letter: pickLetter(),
-        startAt,
-        endsAt: startAt + duration * 1000,
-        categories,
-        submissions: {},
-        scores: {},
-        submitted: {}
-      };
-      room.updatedAt = firebase.database.ServerValue.TIMESTAMP;
-      return room;
-    }, undefined, false);
-
-    if (!result.committed) throw new Error("Impossible de lancer la partie. Vérifie que deux joueurs sont connectés.");
-  } catch (error) {
-    console.error(error);
-    notice(error.message || "Erreur lors du lancement.", "error");
-  }
-}
-
 function renderGame() {
-  if (!roomData || !roomData.game) return;
-  const game = roomData.game;
-  if (shownGameId !== game.id) {
-    shownGameId = game.id;
-    submitted = Boolean(game.submitted && game.submitted[uid]);
-    locallyExpiredGame = null;
-    $("roundLabel").textContent = "MANCHE " + (roomData.round || 1);
-    $("letter").textContent = game.letter || "?";
-    $("answers").replaceChildren();
-    (game.categories || categories).forEach(category => {
-      const wrapper = document.createElement("div");
-      wrapper.className = "answer";
-      const label = document.createElement("label");
-      const input = document.createElement("input");
-      const id = "answer_" + escapeKey(category);
-      label.htmlFor = id;
-      label.textContent = category;
-      input.id = id;
-      input.name = category;
-      input.maxLength = 60;
-      input.placeholder = "Ta réponse...";
-      input.autocomplete = "off";
-      input.disabled = submitted;
-      wrapper.append(label,input);
-      $("answers").append(wrapper);
-    });
-  }
-  submitted = Boolean(game.submitted && game.submitted[uid]);
-  $("submitBtn").disabled = submitted;
-  $("submitBtn").textContent = submitted ? "Réponses validées ✓" : "Valider mes réponses";
-  if (submitted) localNotice("submitNotice","Tes réponses ont été envoyées.","success");
-  else localNotice("submitNotice","");
-  updateTimer();
-  if (timerInterval) clearInterval(timerInterval);
-  timerInterval = setInterval(updateTimer,200);
-}
+  if (!state) return;
+  $("roundLabel").textContent = "MANCHE " + state.round + " / " + state.maxRounds;
+  $("letter").textContent = state.letter || "?";
+  const oldValues = {};
+  $("answers").querySelectorAll("input").forEach(input => oldValues[input.name] = input.value);
 
-function updateTimer() {
-  const game = roomData && roomData.game;
-  if (!game || roomData.status !== "playing") {
-    if (timerInterval) clearInterval(timerInterval);
-    timerInterval = null;
-    return;
-  }
-  const now = Date.now();
-  const remaining = Math.max(0,game.endsAt-now);
-  const sec = Math.ceil(remaining/1000);
-  $("timer").textContent = "00:" + String(sec).padStart(2,"0");
-  const duration = Math.max(1,game.endsAt-game.startAt);
-  $("progressBar").style.width = Math.max(0,remaining/duration*100)+"%";
-  if (now < game.startAt) {
-    $("timer").textContent = "00:0" + Math.max(1,Math.ceil((game.startAt-now)/1000));
-    $("submitBtn").disabled = true;
-  } else if (!submitted) {
-    $("submitBtn").disabled = false;
-  }
-  if (remaining === 0 && locallyExpiredGame !== game.id) {
-    locallyExpiredGame = game.id;
-    finishRound().catch(console.error);
-  }
-}
-
-function normalizeAnswer(value) {
-  return String(value || "").trim().normalize("NFD")
-    .replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("fr")
-    .replace(/\s+/g," ");
-}
-
-async function submitAnswers() {
-  try {
-    requireReady();
-    const game = roomData && roomData.game;
-    if (!game || roomData.status !== "playing") throw new Error("Aucune manche en cours.");
-    if (Date.now() < game.startAt) throw new Error("Attends le début de la manche.");
-    if (Date.now() >= game.endsAt) throw new Error("Le temps est écoulé.");
-    if (submitted || (game.submitted && game.submitted[uid])) throw new Error("Tu as déjà validé tes réponses.");
-
-    const answers = {};
-    (game.categories || categories).forEach(category => {
-      const input = document.querySelector('[name="' + CSS.escape(category) + '"]');
-      answers[category] = input ? input.value.trim().slice(0,60) : "";
-    });
-    $("submitBtn").disabled = true;
-
-    const result = await roomRef.child("game").transaction(current => {
-      if (!current || current.id !== game.id || Date.now() >= current.endsAt) return;
-      current.submissions = current.submissions || {};
-      current.submitted = current.submitted || {};
-      if (current.submitted[uid]) return;
-      current.submissions[uid] = answers;
-      current.submitted[uid] = true;
-      return current;
-    }, undefined, false);
-
-    if (!result.committed) throw new Error("La validation a échoué : la manche est terminée ou tes réponses ont déjà été enregistrées.");
-    submitted = true;
-    localNotice("submitNotice","Réponses enregistrées !","success");
-    $("submitBtn").textContent = "Réponses validées ✓";
-  } catch (error) {
-    console.error(error);
-    localNotice("submitNotice",error.message || "Impossible d'envoyer tes réponses.","error");
-    $("submitBtn").disabled = false;
-  }
-}
-
-/*
-  Calcul du score côté client pour cette version de démarrage.
-  Pour un jeu public compétitif, déplacer le calcul et la clôture de manche
-  dans une Cloud Function ou un serveur fiable : les règles Firebase seules
-  ne rendent pas ce calcul client inviolable.
-*/
-async function finishRound() {
-  if (!roomRef || !roomData || !roomData.game) return;
-  const game = roomData.game;
-  if (roomData.host !== uid) return; // Un seul client tente la clôture : l'hôte.
-  const snap = await roomRef.child("game").once("value");
-  const current = snap.val();
-  if (!current || current.id !== game.id || Date.now() < current.endsAt) return;
-  const submissions = current.submissions || {};
-  const scores = {};
-  const allPlayers = roomData.players || {};
-  Object.keys(allPlayers).forEach(playerId => scores[playerId] = 0);
-
-  (current.categories || categories).forEach(category => {
-    const counts = {};
-    Object.entries(submissions).forEach(([playerId,answers]) => {
-      const answer = normalizeAnswer(answers && answers[category]);
-      if (answer && answer.charAt(0).toLocaleUpperCase("fr") === current.letter) {
-        counts[answer] = (counts[answer] || 0) + 1;
-      }
-    });
-    Object.entries(submissions).forEach(([playerId,answers]) => {
-      const answer = normalizeAnswer(answers && answers[category]);
-      if (!answer || answer.charAt(0).toLocaleUpperCase("fr") !== current.letter) return;
-      scores[playerId] = (scores[playerId] || 0) + (counts[answer] === 1 ? 10 : 5);
-    });
+  $("answers").replaceChildren();
+  categories.forEach(category => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "answer";
+    const label = document.createElement("label");
+    const input = document.createElement("input");
+    label.textContent = category;
+    label.htmlFor = "answer_" + categories.indexOf(category);
+    input.id = label.htmlFor;
+    input.name = category;
+    input.maxLength = 60;
+    input.placeholder = "Ta réponse...";
+    input.value = oldValues[category] || "";
+    input.disabled = submitted;
+    wrapper.append(label,input);
+    $("answers").append(wrapper);
   });
-
-  const result = await roomRef.transaction(room => {
-    if (!room || room.host !== uid || room.status !== "playing" ||
-        !room.game || room.game.id !== current.id || Date.now() < room.game.endsAt) return;
-    room.game.scores = scores;
-    room.game.finishedAt = firebase.database.ServerValue.TIMESTAMP;
-    room.status = "results";
-    room.updatedAt = firebase.database.ServerValue.TIMESTAMP;
-    room.players = room.players || {};
-    Object.entries(scores).forEach(([id,score]) => {
-      if (room.players[id]) room.players[id].score = (room.players[id].score || 0) + score;
-    });
-    return room;
-  }, undefined, false);
-  if (!result.committed) return;
+  $("submitBtn").disabled = submitted;
+  $("submitBtn").textContent = submitted ? "Réponses envoyées ✓" : "Valider mes réponses";
+  localNotice("submitNotice", submitted ? "Tes réponses ont été envoyées." : "");
+  updateTimer();
 }
-
+function updateTimer() {
+  if (timerInterval) clearInterval(timerInterval);
+  const tick = () => {
+    if (!state || state.status !== "playing" || !state.deadline) {
+      $("timer").textContent = state?.status === "countdown" ? "Prépare-toi !" : "--";
+      $("progressBar").style.width = "100%";
+      return;
+    }
+    const remaining = Math.max(0, state.deadline - Date.now());
+    const seconds = Math.ceil(remaining / 1000);
+    $("timer").textContent = Math.floor(seconds / 60).toString().padStart(2,"0") + ":" + (seconds % 60).toString().padStart(2,"0");
+    $("progressBar").style.width = Math.min(100, remaining / (Number(state.duration) * 1000) * 100) + "%";
+    if (remaining <= 0) {
+      $("submitBtn").disabled = true;
+      $("timer").textContent = "00:00";
+    } else if (!submitted) {
+      $("submitBtn").disabled = false;
+    }
+  };
+  tick();
+  timerInterval = setInterval(tick, 250);
+}
 function renderResults() {
-  if (!roomData || !roomData.game) return;
-  const players = roomData.players || {};
-  const scores = roomData.game.scores || {};
-  const entries = Object.keys(players).map(id => ({
-    id, name: players[id].name || "Joueur",
-    score: scores[id] || 0, total: players[id].score || 0
-  })).sort((a,b) => b.score-a.score);
-
+  if (!state) return;
+  const scores = [...(state.leaderboard || [])].sort((a,b) => b.score - a.score);
   $("scores").replaceChildren();
-  entries.forEach((p,index) => {
+  scores.forEach((p,index) => {
     const row = document.createElement("div");
     row.className = "score-row";
     const name = document.createElement("div");
-    name.textContent = (index===0 ? "🏆 " : "") + p.name;
+    name.textContent = (index === 0 ? "🏆 " : "") + p.name;
     const points = document.createElement("strong");
-    points.textContent = "+" + p.score + " pts";
+    points.textContent = p.score + " pts";
     row.append(name,points);
     $("scores").append(row);
   });
 
-  const isHost = roomData.host === uid;
-  $("nextBtn").disabled = !isHost;
-  $("nextBtn").textContent = isHost ? "Retour au salon" : "En attente de l'hôte...";
-  localNotice("resultNotice",isHost ? "Tu peux retourner au salon pour préparer la prochaine manche." : "L'hôte décidera quand revenir au salon.");
-}
-
-async function nextRound() {
-  if (!roomRef || !roomData || roomData.host !== uid || roomData.status !== "results") return;
-  const result = await roomRef.transaction(room => {
-    if (!room || room.host !== uid || room.status !== "results") return;
-    room.status = "lobby";
-    room.game = null;
-    room.updatedAt = firebase.database.ServerValue.TIMESTAMP;
-    return room;
-  }, undefined, false);
-  if (!result.committed) notice("Impossible de revenir au salon.", "error");
-}
-
-function renderChat(messages) {
-  const box = $("chatMessages");
-  box.replaceChildren();
-  Object.entries(messages).sort((a,b) => (a[1].at||0)-(b[1].at||0)).forEach(([id,msg]) => {
-    if (!msg) return;
-    const line = document.createElement("div");
-    line.className = "chat-message";
-    const author = document.createElement("b");
-    author.textContent = (msg.name || "Joueur") + " : ";
-    const body = document.createElement("span");
-    body.textContent = msg.text || "";
-    line.append(author,body);
-    box.append(line);
-  });
-  box.scrollTop = box.scrollHeight;
-}
-
-async function sendChat(event) {
-  event.preventDefault();
-  try {
-    requireReady();
-    if (!roomRef || !roomData) throw new Error("Tu n'es pas dans une salle.");
-    const text = $("chatInput").value.trim().slice(0,200);
-    if (!text) return;
-    if (roomData.players && !roomData.players[uid]) throw new Error("Tu ne fais pas partie de cette salle.");
-    await roomRef.child("chat").push({
-      uid, name: roomData.players[uid].name,
-      text, at: firebase.database.ServerValue.TIMESTAMP
+  $("resultDetails").replaceChildren();
+  const results = lastResults?.results || [];
+  results.forEach(player => {
+    const box = document.createElement("div");
+    box.className = "panel";
+    const title = document.createElement("h3");
+    title.textContent = player.name + " — " + player.valid + " réponse(s) valide(s)";
+    box.append(title);
+    (player.rows || []).forEach(answer => {
+      const line = document.createElement("div");
+      line.className = "score-row";
+      const left = document.createElement("div");
+      left.textContent = answer.category + " : " + (answer.word || "—");
+      const right = document.createElement("strong");
+      right.textContent = answer.valid ? "+10 pts" : "0 pt";
+      line.append(left,right);
+      box.append(line);
     });
-    $("chatInput").value = "";
-  } catch (error) {
-    notice(error.message || "Impossible d'envoyer le message.", "error");
+    $("resultDetails").append(box);
+  });
+
+  $("nextBtn").disabled = !isHost();
+  $("nextBtn").textContent = isHost() ? (state.round >= state.maxRounds ? "Terminer la partie" : "Manche suivante") : "En attente de l'hôte...";
+  $("resultSubtitle").textContent = "Manche " + state.round + " terminée.";
+  localNotice("resultNotice", isHost() ? "Tu peux passer à la suite." : "L'hôte choisira quand continuer.");
+}
+function renderFinalScores() {
+  $("finalScores").replaceChildren();
+  [...(state?.leaderboard || [])].sort((a,b) => b.score - a.score).forEach((p,index) => {
+    const row = document.createElement("div");
+    row.className = "score-row";
+    const name = document.createElement("div");
+    name.textContent = (index === 0 ? "🥇 " : (index + 1) + ". ") + p.name;
+    const score = document.createElement("strong");
+    score.textContent = p.score + " pts";
+    row.append(name,score);
+    $("finalScores").append(row);
+  });
+}
+function renderShop() {
+  const player = me();
+  if (!player || !state) return;
+  $("wallet").textContent = "Pièces : " + player.coins;
+  $("shop").replaceChildren();
+  (state.powers || powers).forEach(power => {
+    const item = document.createElement("div");
+    item.className = "shop-item";
+    const title = document.createElement("strong");
+    title.textContent = power.name;
+    const desc = document.createElement("p");
+    desc.textContent = power.description;
+    const buy = document.createElement("button");
+    buy.className = "secondary";
+    buy.textContent = "Acheter · " + power.price + " pièces";
+    buy.disabled = player.coins < power.price || (player.inventory || []).length >= 2;
+    buy.addEventListener("click", () => socket.emit("shop:buy", power.id));
+    item.append(title,desc,buy);
+    $("shop").append(item);
+  });
+  $("powerTarget").replaceChildren();
+  (state.players || []).filter(p => p.id !== myPlayerId).forEach(p => {
+    const option = document.createElement("option");
+    option.value = p.id;
+    option.textContent = p.name;
+    $("powerTarget").append(option);
+  });
+  $("inventory").replaceChildren();
+  const inv = player.inventory || [];
+  if (!inv.length) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "Aucun pouvoir";
+    $("inventory").append(option);
+  } else {
+    inv.forEach(id => {
+      const power = (state.powers || powers).find(x => x.id === id);
+      const option = document.createElement("option");
+      option.value = id;
+      option.textContent = power ? power.name : id;
+      $("inventory").append(option);
+    });
   }
 }
-
-async function leaveRoom() {
-  await cleanupRoomListeners(true);
+function sendAnswers() {
+  if (!state || state.status !== "playing" || submitted) return;
+  const answers = {};
+  $("answers").querySelectorAll("input").forEach(input => answers[input.name] = input.value.trim());
+  $("submitBtn").disabled = true;
+  socket.emit("answers:submit", answers);
+}
+function leaveRoom() {
+  socket.disconnect();
+  currentRoom = null;
+  state = null;
+  submitted = false;
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = null;
+  $("chatSection").style.display = "none";
+  $("chatMessages").replaceChildren();
   showView("home");
-  notice("");
+  socket.connect();
+}
+function sendChat(event) {
+  event.preventDefault();
+  const message = $("chatInput").value.trim();
+  if (!message) return;
+  socket.emit("chat:send", message);
+  $("chatInput").value = "";
+}
+function addChatMessage(message) {
+  const line = document.createElement("div");
+  line.className = "chat-message";
+  const author = document.createElement("b");
+  author.textContent = (message.name || "Joueur") + " : ";
+  const body = document.createElement("span");
+  body.textContent = message.text || "";
+  line.append(author,body);
+  $("chatMessages").append(line);
+  $("chatMessages").scrollTop = $("chatMessages").scrollHeight;
+}
+function usePower() {
+  const powerId = $("inventory").value;
+  if (!powerId) return localNotice("powerNotice","Tu n'as pas de pouvoir à utiliser.","error");
+  if (powerId === "friend") {
+    const text = $("privateText").value.trim();
+    if (!text) return localNotice("powerNotice","Écris ton indice ou ta demande avant d'utiliser ce pouvoir.","error");
+    socket.emit("chat:private",{targetId:$("powerTarget").value,text});
+  }
+  socket.emit("power:use",{powerId,targetId:$("powerTarget").value});
 }
 
-async function cleanupRoomListeners(markDisconnected) {
-  if (changingRoom) return;
-  changingRoom = true;
-  try {
+socket.on("connect", () => {
+  $("connectionDot").className = "dot online";
+  $("connectionText").textContent = "En ligne";
+  $("createBtn").disabled = false;
+  $("joinBtn").disabled = false;
+  notice("");
+});
+socket.on("disconnect", () => {
+  $("connectionDot").className = "dot";
+  $("connectionText").textContent = "Reconnexion...";
+  $("createBtn").disabled = true;
+  $("joinBtn").disabled = true;
+  notice("Connexion au serveur perdue. Tentative de reconnexion…","error");
+});
+socket.on("connect_error", () => {
+  $("connectionText").textContent = "Erreur de connexion";
+  notice("Impossible de joindre le serveur Render. Vérifie que le site est bien déployé.","error");
+});
+socket.on("game:config", config => {
+  categories = config.categories || [];
+  powers = config.powers || [];
+});
+socket.on("room:joined", data => {
+  currentRoom = data.code;
+  myPlayerId = data.playerId;
+  submitted = false;
+  lastResults = null;
+  $("chatSection").style.display = "block";
+  $("chatMessages").replaceChildren();
+  notice("Salle " + currentRoom + " rejointe !","success");
+  setTimeout(() => notice(""),2200);
+});
+socket.on("room:update", newState => {
+  state = newState;
+  if (state.status !== "playing") {
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = null;
-    if (roomRef && roomListener) roomRef.off("value",roomListener);
-    if (roomRef && chatListener) roomRef.child("chat").off("value",chatListener);
-    if (presenceDisconnect) {
-      try { await presenceDisconnect.cancel(); } catch (_) {}
-    }
-    if (markDisconnected && presenceRef) {
-      try { await presenceRef.remove(); } catch (error) { console.warn(error); }
-    }
-    roomRef = null; roomListener = null; chatListener = null;
-    presenceRef = null; presenceDisconnect = null;
-    currentRoom = null; roomData = null;
-    $("chatSection").style.display = "none";
-    $("chatMessages").replaceChildren();
-    shownGameId = null; submitted = false;
-  } finally {
-    changingRoom = false;
   }
-}
+  renderRoom();
+});
+socket.on("answers:accepted", data => {
+  submitted = true;
+  $("submitBtn").disabled = true;
+  $("submitBtn").textContent = "Réponses envoyées ✓";
+  $("answers").querySelectorAll("input").forEach(input => input.disabled = true);
+  localNotice("submitNotice",data?.message || "Réponses enregistrées !","success");
+});
+socket.on("round:results", data => {
+  lastResults = data;
+  submitted = false;
+  if (data.state) state = data.state;
+  showView("results");
+  renderResults();
+});
+socket.on("game:finished", data => {
+  state = data;
+  showView("finished");
+  renderFinalScores();
+});
+socket.on("chat:message", addChatMessage);
+socket.on("chat:private", data => {
+  localNotice("privateMessages","Message privé de " + data.from + " : " + data.text,"success");
+});
+socket.on("chat:private:notice", message => localNotice("powerNotice",message,"success"));
+socket.on("power:friend-request", data => {
+  localNotice("powerNotice",data.from + " te demande un indice ! Envoie-lui un message privé dans le chat.","success");
+});
+socket.on("power:spy-result", data => localNotice("powerNotice",data.message,"success"));
+socket.on("shop:bought", data => localNotice("powerNotice",data.message,"success"));
+socket.on("app:error", message => {
+  notice(message,"error");
+  $("createBtn").disabled = false;
+  $("joinBtn").disabled = false;
+  $("startBtn").disabled = false;
+  $("submitBtn").disabled = false;
+});
 
-$("createBtn").addEventListener("click",createRoom);
-$("joinBtn").addEventListener("click",joinRoom);
-$("startBtn").addEventListener("click",startGame);
-$("submitBtn").addEventListener("click",submitAnswers);
-$("nextBtn").addEventListener("click",nextRound);
+$("createBtn").addEventListener("click",emitCreate);
+$("joinBtn").addEventListener("click",emitJoin);
+$("startBtn").addEventListener("click",() => socket.emit("game:start"));
+$("submitBtn").addEventListener("click",sendAnswers);
+$("nextBtn").addEventListener("click",() => socket.emit("round:next"));
 $("leaveBtn").addEventListener("click",leaveRoom);
 $("gameLeaveBtn").addEventListener("click",leaveRoom);
+$("backHomeBtn").addEventListener("click",leaveRoom);
 $("chatForm").addEventListener("submit",sendChat);
+$("usePowerBtn").addEventListener("click",usePower);
+$("readyBtn").addEventListener("click",() => {
+  myReady = !myReady;
+  socket.emit("player:ready",myReady);
+  $("readyBtn").textContent = myReady ? "Je suis prêt ✓" : "Je ne suis pas prêt";
+});
 $("copyBtn").addEventListener("click",async () => {
   try {
     await navigator.clipboard.writeText(currentRoom || $("lobbyCode").textContent);
     $("copyBtn").textContent = "Code copié ✓";
     setTimeout(() => $("copyBtn").textContent = "Copier le code",1500);
   } catch (_) {
-    notice("Copie impossible sur ce navigateur. Sélectionne le code et copie-le manuellement.");
+    notice("Copie impossible. Sélectionne le code pour le copier.");
   }
 });
 $("roomCode").addEventListener("input",e => {
-  e.target.value = e.target.value.toUpperCase().replace(/[^A-HJ-NP-Z2-9]/g,"").slice(0,6);
+  e.target.value = e.target.value.toUpperCase().replace(/[^A-F0-9]/g,"").slice(0,6);
 });
 $("nickname").addEventListener("input",() => $("joinNickname").value = $("nickname").value);
 $("joinNickname").addEventListener("input",() => $("nickname").value = $("joinNickname").value);
 
-window.addEventListener("beforeunload",() => {
-  if (presenceRef) presenceRef.remove().catch(()=>{});
-});
-
-init();
+const savedName = localStorage.getItem("alphaBlitzName") || "";
+$("nickname").value = savedName;
+$("joinNickname").value = savedName;
 </script>
 </body>
 </html>
-
