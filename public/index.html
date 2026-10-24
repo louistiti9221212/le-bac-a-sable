@@ -1,257 +1,258 @@
-const express = require("express");
-const http = require("http");
-const { Server } = require("socket.io");
-const crypto = require("crypto");
 
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
-const PORT = process.env.PORT || 3000;
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ALPHA BLITZ — Petit Bac</title>
+<script src="/socket.io/socket.io.js"></script>
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--card:#151d32;--line:#293653;--blue:#6485ff;--text:#f4f6ff;--muted:#aab5ce}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#202b50,var(--bg) 65%);font-family:system-ui,Arial,sans-serif;color:var(--text);min-height:100vh}
+header{padding:22px 16px;text-align:center;border-bottom:1px solid var(--line)}
+.logo{font-size:clamp(27px,6vw,44px);font-weight:1000;letter-spacing:3px;color:#91a7ff}
+header p{color:var(--muted);margin:5px 0}
+main{max-width:1000px;margin:24px auto;padding:0 14px 40px}
+.panel{background:rgba(21,29,50,.96);border:1px solid var(--line);border-radius:18px;padding:20px;margin-bottom:16px}
+h2{margin:0 0 14px;font-size:21px}
+h3{margin:0 0 10px}
+input,select,button{font:inherit;border-radius:10px;padding:12px;border:1px solid var(--line)}
+input,select{background:#0b1225;color:var(--text);width:100%;min-width:0}
+button{background:var(--blue);color:white;font-weight:750;border:0;cursor:pointer}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.secondary{background:#283653}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.row>*{flex:1}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.hidden{display:none!important}
+.muted{color:var(--muted)}
+.notice{padding:12px;border-radius:10px;background:#202c49;margin:12px 0;overflow-wrap:anywhere}
+.error{background:#572b3a;color:#ffdce5}
+.players{display:flex;gap:8px;flex-wrap:wrap}
+.player{background:#222e49;border:1px solid var(--line);padding:9px 12px;border-radius:12px}
+.bigletter{font-size:64px;font-weight:1000;text-align:center;color:#a7b8ff;line-height:1.2}
+.timer{text-align:center;font-size:22px;font-weight:800}
+.category{background:#0c1428;padding:12px;border:1px solid var(--line);border-radius:12px}
+.category label{display:block;font-weight:700;margin-bottom:8px}
+.score{font-size:26px;font-weight:900}
+#chatlog{height:150px;overflow:auto;background:#0b1225;padding:10px;border-radius:10px;margin:10px 0}
+.chatline{margin:5px 0;overflow-wrap:anywhere}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:15px}
+</style>
+</head>
+<body>
+<header>
+ <div class="logo">⚡ ALPHA BLITZ</div>
+ <p>Le Petit Bac — défie tes amis !</p>
+</header>
+<main>
+ <div id="notice" class="notice">Connexion au serveur...</div>
 
-app.use(express.static("public"));
-app.get("/health", (_req, res) => res.json({ ok: true, service: "Le Bac à Sable" }));
+ <section id="home" class="panel">
+  <h2>🎮 Rejoindre la partie</h2>
+  <label for="name">Ton pseudo</label>
+  <div class="row"><input id="name" maxlength="18" placeholder="Ex. Alex" value=""></div>
+  <div class="grid">
+   <div class="panel">
+    <h3>🚀 Créer une salle</h3>
+    <label for="rounds">Nombre de manches</label>
+    <select id="rounds"><option>3</option><option selected>5</option><option>7</option><option>10</option></select>
+    <label for="duration">Durée d'une manche</label>
+    <select id="duration"><option value="30">30 secondes</option><option value="60">1 minute</option><option value="90">1 min 30</option><option value="120">2 minutes</option><option value="180" selected>3 minutes</option></select>
+    <div class="row"><button id="create">Créer la salle</button></div>
+   </div>
+   <div class="panel">
+    <h3>🔑 Rejoindre une salle</h3>
+    <label for="roomcode">Code de la salle</label>
+    <div class="row"><input id="roomcode" maxlength="6" placeholder="Ex. A1B2C3"></div>
+    <button id="join">Rejoindre</button>
+   </div>
+  </div>
+ </section>
 
-const CATEGORIES = ["Prénom", "Ville ou pays", "Animal", "Métier", "Objet", "Aliment", "Célébrité", "Marque"];
-const LETTERS = "ABCDEFGHJKLMNOPRSTV";
-const POWERS = [
-  { id: "friend", name: "📞 Appel à un ami", price: 30, description: "Envoie une demande d'indice privé à un joueur." },
-  { id: "double", name: "✨ Multiplicateur", price: 55, description: "Double les pièces gagnées sur cette manche (bonus limité)." },
-  { id: "time", name: "⏱️ Temps bonus", price: 65, description: "Ajoute 10 secondes à la manche." },
-  { id: "spy", name: "🕵️ Espionnage", price: 70, description: "Découvre une catégorie choisie au hasard chez un adversaire." },
-  { id: "shield", name: "🛡️ Bouclier", price: 75, description: "Protège contre la prochaine demande de pouvoir ciblée." },
-  { id: "change", name: "🔄 Changement de catégorie", price: 85, description: "Dans cette démo, remplace une catégorie par une catégorie aléatoire." },
-  { id: "mystery", name: "🎲 Pouvoir mystère", price: 100, description: "Un effet aléatoire." }
-];
-const rooms = new Map();
-const norm = s => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toUpperCase();
-const cleanName = s => String(s || "Joueur").replace(/[<>]/g, "").trim().slice(0, 18) || "Joueur";
-const code = () => crypto.randomBytes(3).toString("hex").toUpperCase();
-const publicPlayer = p => ({ id: p.id, name: p.name, score: p.score, ready: p.ready, host: p.host, inventory: p.inventory });
+ <section id="roompanel" class="panel hidden">
+  <div class="row" style="align-items:center">
+   <div style="flex:2"><h2>🏠 Salle <span id="code"></span></h2><div class="muted">Partage ce code avec tes amis.</div></div>
+   <button id="copy" class="secondary">Copier le code</button>
+  </div>
+  <h3>Joueurs (<span id="playercount">0</span>/8)</h3>
+  <div id="players" class="players"></div>
+  <div id="lobbyactions" class="row">
+   <button id="ready" class="secondary">Je suis prêt</button>
+   <button id="start" class="hidden">Lancer la partie</button>
+  </div>
+  <div id="roundinfo" class="notice hidden"></div>
+ </section>
 
-function roomState(room) {
-  return {
-    code: room.code, status: room.status, hostId: room.hostId,
-    players: [...room.players.values()].map(publicPlayer),
-    round: room.round, maxRounds: room.maxRounds, duration: room.duration,
-    letter: room.status === "playing" ? room.letter : null,
-    deadline: room.deadline, categories: room.categories,
-    powers: POWERS,
-    leaderboard: [...room.players.values()].map(p => ({ id: p.id, name: p.name, score: p.score, coins: p.coins })).sort((a,b) => b.score-a.score)
-  };
-}
-function emitRoom(room) { io.to(room.code).emit("room:update", roomState(room)); }
-function system(room, message) { io.to(room.code).emit("chat:message", { name: "Le jeu", text: message, system: true, at: Date.now() }); }
-function sendError(socket, message) { socket.emit("app:error", message); }
-function findPlayer(room, socket) { return room?.players.get(socket.id); }
-function stopTimer(room) {
-  if (room.timer) clearTimeout(room.timer);
-  if (room.countdownTimer) clearTimeout(room.countdownTimer);
-  room.timer = null;
-  room.countdownTimer = null;
-}
-function chooseLetter() { return LETTERS[Math.floor(Math.random() * LETTERS.length)]; }
-function startCountdown(room) {
-  stopTimer(room);
-  room.status = "countdown";
-  room.letter = null;
-  room.deadline = Date.now() + 4000;
-  emitRoom(room);
-  system(room, `Préparez-vous : manche ${room.round} dans 3 secondes !`);
-  room.countdownTimer = setTimeout(() => startRound(room), 4000);
-}
-function startRound(room) {
-  stopTimer(room);
-  room.status = "playing";
-  room.letter = chooseLetter();
-  room.deadline = Date.now() + room.duration * 1000;
-  room.submissions = new Map();
-  for (const p of room.players.values()) p.submitted = false;
-  room.timer = setTimeout(() => finishRound(room, true), room.duration * 1000);
-  emitRoom(room);
-  system(room, `Manche ${room.round} : la lettre est ${room.letter} !`);
-}
-function finishRound(room, timedOut = false) {
-  if (room.status !== "playing") return;
-  stopTimer(room);
-  room.status = "results";
-  const details = [];
-  for (const p of room.players.values()) {
-    const answers = room.submissions.get(p.id) || {};
-    const rows = [];
-    let valid = 0, earned = 0;
-    for (const cat of room.categories) {
-      const word = String(answers[cat] || "").trim().slice(0, 60);
-      const ok = !!word && norm(word).startsWith(room.letter);
-      if (ok) {
-        valid++;
-        p.score += 10;
-        let reward = word.length >= 9 ? 12 : word.length >= 6 ? 8 : 5;
-        if (p.activePowers.includes("double")) reward = Math.min(25, reward * 2);
-        p.coins += reward; earned += reward;
-        rows.push({ category: cat, word, valid: true, points: 10, coins: reward });
-      } else if (word) rows.push({ category: cat, word, valid: false, points: 0, coins: 0 });
-      else rows.push({ category: cat, word: "", valid: false, points: 0, coins: 0 });
-    }
-    p.activePowers = p.activePowers.filter(x => x !== "double");
-    details.push({ playerId: p.id, name: p.name, score: p.score, valid, earned, rows });
+ <section id="gamepanel" class="panel hidden">
+  <div class="row">
+   <div><div class="muted">Manche</div><div class="score" id="round">1/5</div></div>
+   <div><div class="muted">Tes points</div><div class="score" id="score">0</div></div>
+  </div>
+  <div id="countdown" class="notice hidden"></div>
+  <div id="playarea" class="hidden">
+   <div class="muted" style="text-align:center">LA LETTRE EST</div>
+   <div class="bigletter" id="letter">A</div>
+   <div id="timer" class="timer">--:--</div>
+   <p class="muted">Trouve un mot qui commence par cette lettre pour chaque catégorie.</p>
+   <form id="answersform"><div id="categories" class="grid"></div>
+    <div class="row"><button id="submit" type="submit">Valider mes réponses</button></div>
+   </form>
+   <div id="submitted" class="notice hidden">Réponses envoyées ! Attends les autres joueurs.</div>
+  </div>
+  <div id="results" class="hidden">
+   <h2>📊 Résultats de la manche</h2>
+   <div id="resultlist"></div>
+   <button id="next" class="hidden">Manche suivante</button>
+  </div>
+  <div id="final" class="hidden">
+   <h2>🏆 Partie terminée !</h2>
+   <div id="finalscores"></div>
+   <button id="backhome">Retour à l'accueil</button>
+  </div>
+ </section>
+
+ <section id="chatpanel" class="panel hidden">
+  <h2>💬 Chat de la salle</h2>
+  <div id="chatlog"></div>
+  <form id="chatform" class="row"><input id="chatinput" maxlength="180" placeholder="Écris un message..."><button>Envoyer</button></form>
+ </section>
+</main>
+<footer>ALPHA BLITZ · Jeu entre amis</footer>
+
+<script>
+(() => {
+ const $ = id => document.getElementById(id);
+ const socket = io();
+ let myId = null, room = null, isHost = false, isReady = false;
+ let currentCategories = [], endAt = 0, tick = null, lastResults = null;
+ const defaultCategories = ["Prénom","Ville ou pays","Animal","Métier","Objet","Aliment","Célébrité","Marque"];
+ function showNotice(message, error=false){
+  $("notice").textContent=message;
+  $("notice").classList.toggle("error",error);
+  $("notice").classList.remove("hidden");
+ }
+ function hide(id){$(id).classList.add("hidden")}
+ function show(id){$(id).classList.remove("hidden")}
+ function sendCreate(){
+  if(!socket.connected)return showNotice("Connexion au serveur en cours, réessaie dans un instant.",true);
+  socket.emit("room:create",{name:$("name").value.trim()||"Joueur",maxRounds:Number($("rounds").value),duration:Number($("duration").value)});
+ }
+ function sendJoin(){
+  if(!socket.connected)return showNotice("Connexion au serveur en cours, réessaie dans un instant.",true);
+  socket.emit("room:join",{name:$("name").value.trim()||"Joueur",code:$("roomcode").value.trim().toUpperCase()});
+ }
+ $("create").onclick=sendCreate;
+ $("join").onclick=sendJoin;
+ $("roomcode").addEventListener("input",()=>{$("roomcode").value=$("roomcode").value.toUpperCase()});
+ $("copy").onclick=async()=>{
+  try{await navigator.clipboard.writeText(room?.code||"");showNotice("Code copié : "+room.code)}
+  catch(e){showNotice("Le code de la salle est : "+(room?.code||""))}
+ };
+ $("ready").onclick=()=>{isReady=!isReady;socket.emit("player:ready",isReady);$("ready").textContent=isReady?"Annuler prêt":"Je suis prêt"};
+ $("start").onclick=()=>socket.emit("game:start");
+ $("next").onclick=()=>socket.emit("round:next");
+ $("backhome").onclick=()=>location.reload();
+ socket.on("connect",()=>showNotice("Connecté au serveur ! Tu peux créer une salle ou en rejoindre une."));
+ socket.on("disconnect",()=>showNotice("Connexion perdue. Reconnexion en cours...",true));
+ socket.on("connect_error",()=>showNotice("Impossible de joindre le serveur. Actualise la page dans quelques secondes.",true));
+ socket.on("app:error",msg=>showNotice(msg,true));
+ socket.on("room:joined",data=>{myId=data.playerId;showNotice("Tu as rejoint la salle "+data.code+" !")});
+ socket.on("room:update",state=>{
+  room=state;isHost=state.hostId===myId;
+  hide("home");show("roompanel");show("chatpanel");
+  $("code").textContent=state.code;$("playercount").textContent=state.players.length;
+  $("players").innerHTML="";
+  state.players.forEach(p=>{
+   const el=document.createElement("div");el.className="player";
+   el.textContent=(p.host?"👑 ":"")+(p.ready?"✅ ":"⏳ ")+p.name+" — "+p.score+" pts";
+   $("players").appendChild(el);
+  });
+  $("start").classList.toggle("hidden",!isHost||state.status!=="lobby");
+  $("ready").classList.toggle("hidden",isHost||state.status!=="lobby");
+  $("lobbyactions").classList.toggle("hidden",state.status!=="lobby");
+  $("roundinfo").classList.toggle("hidden",state.status==="lobby");
+  $("roundinfo").textContent=state.status==="lobby"?"En attente des joueurs...":state.status==="countdown"?"Préparez-vous !":state.status==="playing"?"Manche en cours !":state.status==="results"?"Manche terminée.":"Partie terminée.";
+  if(state.status!=="lobby")show("gamepanel");
+  $("round").textContent=state.round+"/"+state.maxRounds;
+  const me=state.players.find(p=>p.id===myId);if(me)$("score").textContent=me.score;
+  if(state.status==="countdown"){
+   show("gamepanel");show("countdown");hide("playarea");hide("results");hide("final");
+   $("countdown").textContent="⏳ Prépare-toi pour la manche "+state.round+"...";
   }
-  room.lastResults = details;
-  io.to(room.code).emit("round:results", { round: room.round, letter: room.letter, timedOut, results: details, state: roomState(room) });
-  emitRoom(room);
-}
-function leaveRoom(socket) {
-  const roomCode = socket.data.roomCode;
-  if (!roomCode) return;
-  const room = rooms.get(roomCode);
-  socket.leave(roomCode);
-  socket.data.roomCode = null;
-  if (!room) return;
-  room.players.delete(socket.id);
-  if (!room.players.size) {
-    stopTimer(room);
-    rooms.delete(roomCode);
-    return;
+  if(state.status==="playing"){
+   show("gamepanel");hide("countdown");hide("results");hide("final");show("playarea");
+   $("letter").textContent=state.letter||"?";
+   if(state.categories.join("|")!==currentCategories.join("|")){
+    currentCategories=state.categories.slice();$("categories").innerHTML="";
+    currentCategories.forEach(cat=>{
+     const wrap=document.createElement("div");wrap.className="category";
+     const label=document.createElement("label");label.textContent=cat;label.htmlFor="cat-"+cat;
+     const input=document.createElement("input");input.id="cat-"+cat;input.name=cat;input.maxLength=60;input.autocomplete="off";input.placeholder="Mot en "+state.letter+"...";
+     wrap.append(label,input);$("categories").appendChild(wrap);
+    });
+   }
+   endAt=state.deadline||Date.now()+180000;startTick();
   }
-  if (room.hostId === socket.id) {
-    const next = room.players.values().next().value;
-    room.hostId = next.id; next.host = true;
-  }
-  emitRoom(room);
-  system(room, "Un joueur a quitté la salle.");
-}
-io.on("connection", socket => {
-  socket.emit("game:config", { categories: CATEGORIES, powers: POWERS });
-  socket.on("room:create", ({ name, maxRounds, duration } = {}) => {
-    leaveRoom(socket);
-    let roomCode;
-    do { roomCode = code(); } while (rooms.has(roomCode));
-    const player = { id: socket.id, name: cleanName(name), score: 0, coins: 50, ready: true, host: true, inventory: [], activePowers: [], shield: false, submitted: false };
-    const room = {
-      code: roomCode, hostId: socket.id, players: new Map([[socket.id, player]]), status: "lobby",
-      round: 1, maxRounds: Math.max(1, Math.min(10, Number(maxRounds) || 5)),
-      duration: Math.max(30, Math.min(180, Number(duration) || 180)),
-      categories: [...CATEGORIES], letter: null, deadline: null, submissions: new Map(), timer: null, countdownTimer: null, lastResults: []
-    };
-    rooms.set(roomCode, room); socket.join(roomCode); socket.data.roomCode = roomCode;
-    socket.emit("room:joined", { code: roomCode, playerId: socket.id });
-    emitRoom(room); system(room, `${player.name} a créé la salle.`);
+  if(state.status==="results"){show("gamepanel");hide("countdown");hide("playarea");show("results");hide("final");}
+  if(state.status==="finished"){show("gamepanel");hide("countdown");hide("playarea");hide("results");show("final");renderFinal(state.leaderboard||[])}
+ });
+ function startTick(){
+  if(tick)clearInterval(tick);
+  tick=setInterval(()=>{
+   let left=Math.max(0,Math.ceil((endAt-Date.now())/1000));
+   $("timer").textContent=Math.floor(left/60)+":"+String(left%60).padStart(2,"0");
+   if(left<=0)clearInterval(tick);
+  },250);
+ }
+ $("answersform").onsubmit=e=>{
+  e.preventDefault();
+  if(!room||room.status!=="playing")return;
+  const answers={};currentCategories.forEach(cat=>answers[cat]=$("cat-"+cat)?.value||"");
+  socket.emit("answers:submit",answers);$("submit").disabled=true;show("submitted");
+ };
+ socket.on("answers:accepted",data=>showNotice(data.message||"Réponses envoyées !"));
+ socket.on("round:results",data=>{
+  lastResults=data;show("results");hide("playarea");hide("countdown");
+  $("resultlist").innerHTML="";
+  (data.results||[]).forEach(player=>{
+   const block=document.createElement("div");block.className="panel";
+   const title=document.createElement("h3");title.textContent=player.name+" — "+player.valid+" réponse(s) valide(s), +"+player.earned+" pièces";
+   block.appendChild(title);
+   (player.rows||[]).forEach(row=>{
+    const line=document.createElement("div");line.className="chatline";
+    line.textContent=(row.valid?"✅ ":"❌ ")+row.category+" : "+(row.word||"—")+" ("+row.points+" pts)";
+    block.appendChild(line);
+   });
+   $("resultlist").appendChild(block);
   });
-  socket.on("room:join", ({ name, code: inputCode } = {}) => {
-    leaveRoom(socket);
-    const room = rooms.get(String(inputCode || "").trim().toUpperCase());
-    if (!room) return sendError(socket, "Cette salle n'existe pas. Vérifie le code.");
-    if (room.status !== "lobby") return sendError(socket, "La partie a déjà commencé.");
-    if (room.players.size >= 8) return sendError(socket, "La salle est complète (8 joueurs maximum).");
-    const player = { id: socket.id, name: cleanName(name), score: 0, coins: 50, ready: false, host: false, inventory: [], activePowers: [], shield: false, submitted: false };
-    room.players.set(socket.id, player); socket.join(room.code); socket.data.roomCode = room.code;
-    socket.emit("room:joined", { code: room.code, playerId: socket.id });
-    emitRoom(room); system(room, `${player.name} a rejoint la salle.`);
+  $("submit").disabled=false;hide("submitted");
+  $("next").classList.toggle("hidden",!isHost);
+  showNotice("Manche terminée ! Consulte les résultats.");
+ });
+ function renderFinal(scores){
+  $("finalscores").innerHTML="";
+  scores.forEach((p,i)=>{
+   const line=document.createElement("div");line.className="player";line.style.margin="8px 0";
+   line.textContent=(i===0?"🥇 ":i===1?"🥈 ":i===2?"🥉 ": (i+1)+". ")+p.name+" — "+p.score+" pts";
+   $("finalscores").appendChild(line);
   });
-  socket.on("player:ready", ready => {
-    const room = rooms.get(socket.data.roomCode); const p = findPlayer(room, socket);
-    if (!p || room.status !== "lobby") return;
-    p.ready = !!ready; emitRoom(room);
-  });
-  socket.on("game:start", () => {
-    const room = rooms.get(socket.data.roomCode); const p = findPlayer(room, socket);
-    if (!room || !p || room.hostId !== socket.id) return sendError(socket, "Seul l'hôte peut lancer la partie.");
-    if (room.players.size < 2) return sendError(socket, "Il faut au moins 2 joueurs pour lancer la partie.");
-    if (room.status !== "lobby") return;
-    room.round = 1;
-    for (const pl of room.players.values()) { pl.score = 0; pl.ready = true; pl.inventory = []; pl.activePowers = []; }
-    startCountdown(room);
-  });
-  socket.on("answers:submit", answers => {
-    const room = rooms.get(socket.data.roomCode); const p = findPlayer(room, socket);
-    if (!room || !p || room.status !== "playing" || p.submitted) return;
-    const safe = {};
-    for (const cat of room.categories) safe[cat] = String(answers?.[cat] || "").trim().slice(0, 60);
-    room.submissions.set(p.id, safe); p.submitted = true;
-    socket.emit("answers:accepted", { message: "Tes réponses ont été envoyées." });
-    if ([...room.players.values()].every(pl => pl.submitted)) finishRound(room, false);
-    else emitRoom(room);
-  });
-  socket.on("chat:send", raw => {
-    const room = rooms.get(socket.data.roomCode); const p = findPlayer(room, socket);
-    const text = String(raw || "").trim().slice(0, 180);
-    if (!room || !p || !text) return;
-    io.to(room.code).emit("chat:message", { name: p.name, text, at: Date.now() });
-  });
-  socket.on("chat:private", ({ targetId, text } = {}) => {
-    const room = rooms.get(socket.data.roomCode); const p = findPlayer(room, socket);
-    const target = room?.players.get(targetId);
-    const message = String(text || "").trim().slice(0, 180);
-    if (!p || !target || !message) return;
-    if (target.shield) { target.shield = false; socket.emit("chat:private:notice", "Le bouclier de ce joueur a bloqué ton pouvoir."); target.id && io.to(target.id).emit("chat:private:notice", "Ton bouclier a bloqué un pouvoir."); return; }
-    io.to(target.id).emit("chat:private", { from: p.name, text: message });
-    socket.emit("chat:private:notice", `Message privé envoyé à ${target.name}.`);
-  });
-  socket.on("shop:buy", powerId => {
-    const room = rooms.get(socket.data.roomCode); const p = findPlayer(room, socket);
-    const power = POWERS.find(x => x.id === powerId);
-    if (!room || !p || !power) return;
-    if (room.status === "playing" && p.submitted) return sendError(socket, "Tu as déjà envoyé tes réponses.");
-    if (p.inventory.length >= 2) return sendError(socket, "Ton inventaire est plein (2 pouvoirs maximum).");
-    if (p.coins < power.price) return sendError(socket, "Tu n'as pas assez de pièces.");
-    p.coins -= power.price;
-    if (powerId === "time") {
-      if (room.status !== "playing") { p.inventory.push(powerId); }
-      else { room.deadline += 10000; }
-    } else if (powerId === "double") {
-      p.activePowers.push("double");
-    } else if (powerId === "shield") {
-      p.shield = true; p.inventory.push(powerId);
-    } else if (powerId === "mystery") {
-      const roll = Math.floor(Math.random() * 3);
-      if (roll === 0) p.coins += 15;
-      else if (roll === 1) { if (room.status === "playing") room.deadline += 10000; else p.inventory.push("time"); }
-      else p.coins += 0;
-    } else {
-      p.inventory.push(powerId);
-    }
-    socket.emit("shop:bought", { powerId, message: "Achat effectué !" });
-    emitRoom(room);
-  });
-  socket.on("power:use", ({ powerId, targetId } = {}) => {
-    const room = rooms.get(socket.data.roomCode); const p = findPlayer(room, socket);
-    if (!room || !p || !p.inventory.includes(powerId)) return sendError(socket, "Tu ne possèdes pas ce pouvoir.");
-    if (room.status === "playing" && p.submitted) return sendError(socket, "Tu as déjà envoyé tes réponses.");
-    if (powerId === "friend") {
-      const target = room.players.get(targetId);
-      if (!target || target.id === p.id) return sendError(socket, "Choisis un autre joueur.");
-      if (target.shield) { target.shield = false; return sendError(socket, "Le bouclier a bloqué le pouvoir."); }
-      io.to(target.id).emit("power:friend-request", { from: p.name });
-      socket.emit("chat:private:notice", "Demande d'aide envoyée.");
-    } else if (powerId === "spy") {
-      const target = [...room.players.values()].find(x => x.id !== p.id);
-      socket.emit("power:spy-result", { message: target ? `Catégorie révélée chez ${target.name} : ${room.categories[Math.floor(Math.random()*room.categories.length)]}` : "Aucun adversaire." });
-    } else if (powerId === "change") {
-      if (room.status !== "lobby") return sendError(socket, "Ce pouvoir est utilisable avant le début de la partie.");
-      const idx = Math.floor(Math.random()*room.categories.length);
-      const replacement = ["Film","Sport","Personnage fictif","Vêtement","Instrument","Plante"][Math.floor(Math.random()*6)];
-      room.categories[idx] = replacement; system(room, `${p.name} a changé une catégorie !`);
-    } else if (powerId === "time") {
-      if (room.status !== "playing") return sendError(socket, "Le temps bonus s'utilise pendant une manche.");
-      room.deadline += 10000;
-    } else if (powerId === "shield") {
-      p.shield = true;
-    } else if (powerId === "double") {
-      p.activePowers.push("double");
-    } else if (powerId === "mystery") {
-      p.coins += 15;
-    }
-    p.inventory = p.inventory.filter(x => x !== powerId);
-    emitRoom(room);
-  });
-  socket.on("round:next", () => {
-    const room = rooms.get(socket.data.roomCode); const p = findPlayer(room, socket);
-    if (!room || !p || room.hostId !== socket.id || room.status !== "results") return;
-    if (room.round >= room.maxRounds) {
-      room.status = "finished"; emitRoom(room); io.to(room.code).emit("game:finished", roomState(room)); return;
-    }
-    room.round++; startCountdown(room);
-  });
-  socket.on("disconnect", () => leaveRoom(socket));
-});
-
-server.listen(PORT, "0.0.0.0", () => console.log(`Le Bac à Sable écoute sur le port ${PORT}`));
+ }
+ socket.on("game:finished",state=>renderFinal(state.leaderboard||[]));
+ function addChat(data){
+  const line=document.createElement("div");line.className="chatline";
+  line.textContent=(data.system?"📢 ": "")+(data.name?data.name+" : ":"")+(data.text||"");
+  $("chatlog").appendChild(line);$("chatlog").scrollTop=$("chatlog").scrollHeight;
+ }
+ socket.on("chat:message",addChat);
+ $("chatform").onsubmit=e=>{
+  e.preventDefault();const text=$("chatinput").value.trim();
+  if(text){socket.emit("chat:send",text);$("chatinput").value=""}
+ };
+ socket.on("game:config",config=>{if(config.categories)currentCategories=config.categories.slice()});
+ socket.on("game:finished",()=>showNotice("Partie terminée ! Bravo à tous."));
+})();
+</script>
+</body>
+</html>
