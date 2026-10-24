@@ -1,4 +1,3 @@
-
 "use strict";
 
 const express = require("express");
@@ -46,7 +45,15 @@ const CATEGORIES = [
 
 const THEMES_PER_ROUND = 8;
 const SPIN_TIMEOUT = 10000;
-const NEXT_SPIN_DELAY = 1400;
+// Laisse le temps à l'animation du navigateur de se terminer avant la roulette suivante.
+const NEXT_SPIN_DELAY = 3200;
+const COUNTDOWN_MS = 3000;
+const VOTE_STEP_TIMEOUT = 25000;
+const MAX_PLAYERS = 8;
+const START_COINS = 50;
+const ROUND_BONUS_COINS = 10;
+const FINISH_BONUS_COINS = 20;
+const MAX_INVENTORY = 2;
 
 const LETTERS = "ABCDEFGHJKLMNOPRSTV";
 
@@ -57,14 +64,23 @@ const MONSTER_IDS = [
 
 const ACCESSORIES = ["none", "crown", "glasses", "hat", "star"];
 
+/* Boutique 1 : cosmétiques (permanents pendant la partie, un seul exemplaire). */
+const COSMETICS = [
+  { id: "crown", name: "Couronne", price: 50 },
+  { id: "glasses", name: "Lunettes", price: 35 },
+  { id: "hat", name: "Chapeau", price: 40 },
+  { id: "star", name: "Étoile", price: 25 }
+];
+
+/* Boutique 2 : pouvoirs (consommables). "available:false" = pas encore jouable. */
 const POWERS = [
-  { id: "friend", name: "📞 Appel à un ami", price: 30 },
-  { id: "double", name: "✨ Multiplicateur", price: 55 },
-  { id: "time", name: "⏱️ Temps bonus", price: 65 },
-  { id: "spy", name: "🕵️ Espionnage", price: 70 },
-  { id: "shield", name: "🛡️ Bouclier", price: 75 },
-  { id: "change", name: "🔄 Changement de catégorie", price: 85 },
-  { id: "mystery", name: "🎲 Pouvoir mystère", price: 100 }
+  { id: "friend", name: "📞 Appel à un ami", price: 30, available: true },
+  { id: "double", name: "✨ Multiplicateur", price: 55, available: true },
+  { id: "time", name: "⏱️ Temps bonus", price: 65, available: true },
+  { id: "spy", name: "🕵️ Espionnage", price: 70, available: true },
+  { id: "shield", name: "🛡️ Bouclier", price: 75, available: true },
+  { id: "change", name: "🔄 Changement de catégorie", price: 85, available: false },
+  { id: "mystery", name: "🎲 Pouvoir mystère", price: 100, available: true }
 ];
 
 const rooms = new Map();
@@ -86,8 +102,12 @@ const cleanName = value =>
 const makeCode = () => crypto.randomBytes(3).toString("hex").toUpperCase();
 const randomItem = array => array[Math.floor(Math.random() * array.length)];
 
-function safeAvatar(input) {
-  const avatar = input || {};
+function safeAvatar(input, ownedCosmetics = []) {
+  const avatar = input && typeof input === "object" ? input : {};
+  const accessory = ACCESSORIES.includes(avatar.accessory)
+    ? avatar.accessory
+    : "none";
+
   return {
     monsterId: MONSTER_IDS.includes(avatar.monsterId)
       ? avatar.monsterId
@@ -95,10 +115,37 @@ function safeAvatar(input) {
     color: /^#[0-9a-fA-F]{6}$/.test(avatar.color || "")
       ? avatar.color
       : "#8b6cff",
-    accessory: ACCESSORIES.includes(avatar.accessory)
-      ? avatar.accessory
-      : "none"
+    // Un accessoire n'est utilisable que s'il a été acheté.
+    accessory:
+      accessory === "none" || ownedCosmetics.includes(accessory)
+        ? accessory
+        : "none"
   };
+}
+
+function newPlayer(id, name, avatar, host) {
+  return {
+    id,
+    name: cleanName(name),
+    score: 0,
+    coins: START_COINS,
+    ready: !!host,
+    host: !!host,
+    avatar: safeAvatar(avatar, []),
+    inventory: [],
+    cosmetics: [],
+    activePowers: [],
+    shield: false,
+    submitted: false
+  };
+}
+
+function throttled(socket, key, ms) {
+  const hits = socket.data.hits || (socket.data.hits = {});
+  const now = Date.now();
+  if (hits[key] && now - hits[key] < ms) return true;
+  hits[key] = now;
+  return false;
 }
 
 function sendError(socket, message) {
@@ -119,6 +166,7 @@ function publicPlayer(player) {
     host: player.host,
     avatar: player.avatar,
     inventory: player.inventory,
+    cosmetics: player.cosmetics,
     submitted: player.submitted
   };
 }
@@ -134,6 +182,7 @@ function roomState(room) {
     categories: room.categories,
     selectedThemes: room.selectedThemes || [],
     spinIndex: room.spinIndex || 0,
+    spinId: room.spinId || 0,
     spinnerId: room.spinnerId || null,
     spinnerName: room.spinnerId
       ? room.players.get(room.spinnerId)?.name || null
@@ -141,6 +190,9 @@ function roomState(room) {
     letter: room.status === "playing" ? room.letter : null,
     theme: room.theme,
     deadline: room.deadline,
+    now: Date.now(),
+    voteIndex: room.voteIndex || 0,
+    voteTotal: room.votePlayers ? room.votePlayers.length : 0,
     players: [...room.players.values()].map(publicPlayer),
     leaderboard: [...room.players.values()]
       .map(p => ({
@@ -179,6 +231,7 @@ function serializeRoom(room) {
       host: p.host,
       avatar: p.avatar,
       inventory: p.inventory,
+      cosmetics: p.cosmetics,
       activePowers: p.activePowers,
       shield: p.shield,
       submitted: p.submitted
@@ -235,9 +288,18 @@ function saveRoom(room) {
   return current;
 }
 
+// Regroupe les sauvegardes rapprochées (évite une réécriture complète à chaque événement).
+function scheduleSave(room) {
+  if (!supabase || !room || room.saveTimer) return;
+  room.saveTimer = setTimeout(() => {
+    room.saveTimer = null;
+    if (rooms.get(room.code) === room) void saveRoom(room);
+  }, 600);
+}
+
 function emitRoom(room) {
   io.to(room.code).emit("room:update", roomState(room));
-  void saveRoom(room);
+  scheduleSave(room);
 }
 
 function system(room, message) {
@@ -284,6 +346,8 @@ function newRoom(code, host, maxRounds, duration) {
     categories: [...CATEGORIES],
     selectedThemes: [],
     spinIndex: 0,
+    spinId: 0,
+    spinOrder: [],
     spinnerId: null,
     pendingTheme: null,
     letter: null,
@@ -298,8 +362,46 @@ function newRoom(code, host, maxRounds, duration) {
     rouletteTimer: null,
     voteTimer: null,
     nextSpinTimer: null,
+    saveTimer: null,
     lastResults: []
   };
+}
+
+function purgeOfflinePlayers(room) {
+  for (const id of [...room.players.keys()]) {
+    if (id.startsWith("offline_")) room.players.delete(id);
+  }
+  if (!room.players.has(room.hostId)) {
+    const next = room.players.values().next().value;
+    if (next) {
+      room.hostId = next.id;
+      for (const p of room.players.values()) p.host = p.id === next.id;
+    }
+  }
+}
+
+function resetToLobby(room, message) {
+  stopTimers(room);
+  room.status = "lobby";
+  room.round = 1;
+  room.letter = null;
+  room.theme = null;
+  room.deadline = null;
+  room.selectedThemes = [];
+  room.spinnerId = null;
+  room.pendingTheme = null;
+  room.submissions = new Map();
+  room.votes = new Map();
+  room.votePlayers = [];
+  room.voteIndex = 0;
+
+  for (const p of room.players.values()) {
+    p.submitted = false;
+    p.ready = p.id === room.hostId;
+  }
+
+  emitRoom(room);
+  if (message) system(room, message);
 }
 
 function startCountdown(room) {
@@ -311,22 +413,28 @@ function startCountdown(room) {
   room.spinIndex = 0;
   room.spinnerId = null;
   room.pendingTheme = null;
-  room.deadline = Date.now() + 3000;
+  room.deadline = Date.now() + COUNTDOWN_MS;
   room.submissions = new Map();
   room.votes = new Map();
+  room.votePlayers = [];
+  room.voteIndex = 0;
 
   for (const p of room.players.values()) p.submitted = false;
 
   emitRoom(room);
-  io.to(room.code).emit("game:started", { round: room.round });
+  io.to(room.code).emit("game:started", {
+    round: room.round,
+    maxRounds: room.maxRounds,
+    countdown: COUNTDOWN_MS
+  });
   system(room, "La partie commence dans 3 secondes !");
 
   room.countdownTimer = setTimeout(() => {
     if (room.status === "countdown") startRoulette(room);
-  }, 3000);
+  }, COUNTDOWN_MS);
 }
 
-/* ---------- NOUVELLE ROULETTE À 8 THÈMES ---------- */
+/* ---------- ROULETTE À 8 THÈMES (autoritaire côté serveur) ---------- */
 
 function startRoulette(room) {
   stopTimers(room);
@@ -337,14 +445,34 @@ function startRoulette(room) {
   room.spinIndex = 0;
   room.spinnerId = null;
   room.pendingTheme = null;
+  room.spinOrder = [...room.players.keys()];
 
   emitRoom(room);
   system(room, `La roulette va sélectionner ${THEMES_PER_ROUND} thèmes !`);
   spinNextTheme(room);
 }
 
+// Désigne le joueur suivant dans l'ordre fixé au début de la roulette,
+// en sautant ceux qui ont quitté la salle.
+function pickSpinner(room) {
+  const order = room.spinOrder || [];
+  for (let k = 0; k < order.length; k++) {
+    const id = order[(room.spinIndex + k) % order.length];
+    if (room.players.has(id)) {
+      room.spinIndex += k;
+      return room.players.get(id);
+    }
+  }
+  return [...room.players.values()][0] || null;
+}
+
 function spinNextTheme(room) {
   if (room.status !== "roulette") return;
+
+  if (room.rouletteTimer) clearTimeout(room.rouletteTimer);
+  room.rouletteTimer = null;
+  if (room.nextSpinTimer) clearTimeout(room.nextSpinTimer);
+  room.nextSpinTimer = null;
 
   if (room.selectedThemes.length >= THEMES_PER_ROUND) {
     startAnswerRound(room);
@@ -360,19 +488,20 @@ function spinNextTheme(room) {
     return;
   }
 
-  const players = [...room.players.values()];
-  if (!players.length) return;
+  const spinner = pickSpinner(room);
+  if (!spinner) return;
 
-  // Les joueurs arrêtent la roulette chacun leur tour.
-  const playerIndex = room.spinIndex % players.length;
-  const spinner = players[playerIndex];
+  room.spinId = (room.spinId || 0) + 1;
+  const spinId = room.spinId;
 
   room.spinnerId = spinner.id;
+  // Le thème est décidé ici, par le serveur, et jamais par un navigateur.
   room.pendingTheme = randomItem(available);
 
   const index = room.selectedThemes.length + 1;
 
   io.to(room.code).emit("roulette:start", {
+    spinId,
     themes: available,
     selectedThemes: [...room.selectedThemes],
     index,
@@ -389,33 +518,41 @@ function spinNextTheme(room) {
     `${spinner.name} doit arrêter la roulette (${index}/${THEMES_PER_ROUND}).`
   );
 
-  // Si le joueur ne clique pas, le serveur valide automatiquement un thème.
+  // Si le joueur ne clique pas à temps, le serveur valide automatiquement le thème.
   room.rouletteTimer = setTimeout(() => {
-    if (room.status === "roulette") acceptPendingTheme(room, true);
+    if (room.status === "roulette" && room.spinId === spinId && room.pendingTheme) {
+      acceptPendingTheme(room, true, spinId);
+    }
   }, SPIN_TIMEOUT);
 }
 
-function acceptPendingTheme(room, automatic = false) {
+function acceptPendingTheme(room, automatic = false, spinId = undefined) {
   if (room.status !== "roulette" || !room.pendingTheme) return;
+  if (spinId !== undefined && spinId !== room.spinId) return;
 
   if (room.rouletteTimer) clearTimeout(room.rouletteTimer);
   room.rouletteTimer = null;
 
   const theme = room.pendingTheme;
+  // On consomme le thème tout de suite : un second clic ou un événement en double ne fera rien.
+  room.pendingTheme = null;
+  room.spinnerId = null;
 
   // Sécurité : un thème ne peut apparaître qu'une fois dans la manche.
   if (room.selectedThemes.includes(theme)) {
-    room.pendingTheme = null;
+    room.spinIndex++;
     spinNextTheme(room);
     return;
   }
 
   room.selectedThemes.push(theme);
-  room.pendingTheme = null;
+  // Le joueur suivant devra arrêter la prochaine roulette.
+  room.spinIndex++;
 
   const index = room.selectedThemes.length;
 
   io.to(room.code).emit("roulette:result", {
+    spinId: room.spinId,
     theme,
     index,
     total: THEMES_PER_ROUND,
@@ -430,15 +567,13 @@ function acceptPendingTheme(room, automatic = false) {
 
   emitRoom(room);
 
-  if (room.selectedThemes.length >= THEMES_PER_ROUND) {
-    room.nextSpinTimer = setTimeout(() => {
-      if (room.status === "roulette") startAnswerRound(room);
-    }, NEXT_SPIN_DELAY);
-  } else {
-    room.nextSpinTimer = setTimeout(() => {
-      if (room.status === "roulette") spinNextTheme(room);
-    }, NEXT_SPIN_DELAY);
-  }
+  if (room.nextSpinTimer) clearTimeout(room.nextSpinTimer);
+  room.nextSpinTimer = setTimeout(() => {
+    room.nextSpinTimer = null;
+    if (room.status !== "roulette") return;
+    if (room.selectedThemes.length >= THEMES_PER_ROUND) startAnswerRound(room);
+    else spinNextTheme(room);
+  }, NEXT_SPIN_DELAY);
 }
 
 function startAnswerRound(room) {
@@ -461,9 +596,12 @@ function startAnswerRound(room) {
 
   io.to(room.code).emit("game:round", {
     round: room.round,
+    maxRounds: room.maxRounds,
     theme: null,
     letter: room.letter,
     duration: room.duration,
+    deadline: room.deadline,
+    now: Date.now(),
     categories,
     selectedThemes: categories
   });
@@ -498,23 +636,86 @@ function publicVotePlayer(room, player) {
   };
 }
 
+function hasAnswers(room, playerId) {
+  const answers = room.submissions.get(playerId) || {};
+  return activeCategories(room).some(c => String(answers[c] || "").trim());
+}
+
+function setVoteTimer(room) {
+  if (room.voteTimer) clearTimeout(room.voteTimer);
+  const expected = room.voteIndex;
+  room.voteTimer = setTimeout(
+    () => advanceVote(room, expected),
+    VOTE_STEP_TIMEOUT
+  );
+}
+
 function startVoting(room) {
   stopTimers(room);
   room.status = "voting";
   room.votes = new Map();
-  room.votePlayers = [...room.players.values()].map(p => p.id);
+  // On ne soumet au vote que les joueurs qui ont au moins une réponse.
+  room.votePlayers = [...room.players.values()]
+    .filter(p => hasAnswers(room, p.id))
+    .map(p => p.id);
   room.voteIndex = 0;
+
+  if (!room.votePlayers.length) {
+    system(room, "Aucune réponse à évaluer.");
+    finishVoting(room);
+    return;
+  }
 
   const players = room.votePlayers
     .map(id => room.players.get(id))
     .filter(Boolean)
     .map(p => publicVotePlayer(room, p));
 
-  io.to(room.code).emit("vote:start", { players });
+  io.to(room.code).emit("vote:start", {
+    players,
+    player: players[0],
+    index: 0,
+    total: room.votePlayers.length,
+    duration: VOTE_STEP_TIMEOUT
+  });
   emitRoom(room);
   system(room, "La phase de vote commence !");
+  setVoteTimer(room);
+}
 
-  room.voteTimer = setTimeout(() => finishVoting(room), 60000);
+function presentVoteTarget(room) {
+  const target = room.players.get(room.votePlayers[room.voteIndex]);
+  if (!target) {
+    finishVoting(room);
+    return;
+  }
+
+  io.to(room.code).emit("vote:player", {
+    player: publicVotePlayer(room, target),
+    index: room.voteIndex,
+    total: room.votePlayers.length,
+    duration: VOTE_STEP_TIMEOUT
+  });
+  emitRoom(room);
+  setVoteTimer(room);
+}
+
+// Fait avancer le vote. expectedIndex protège contre les clics ou événements en double.
+function advanceVote(room, expectedIndex) {
+  if (room.status !== "voting") return;
+  if (expectedIndex !== undefined && expectedIndex !== room.voteIndex) return;
+
+  if (room.voteTimer) clearTimeout(room.voteTimer);
+  room.voteTimer = null;
+
+  room.voteIndex++;
+
+  if (room.voteIndex >= room.votePlayers.length) {
+    finishVoting(room);
+    return;
+  }
+
+  presentVoteTarget(room);
 }
 
 function finishRound(room, timedOut = false) {
@@ -535,6 +736,7 @@ function finishRound(room, timedOut = false) {
 }
 
 function finishVoting(room) {
+  // Garde : les résultats et les récompenses ne sont calculés qu'une seule fois.
   if (room.status !== "voting") return;
   stopTimers(room);
 
@@ -583,6 +785,10 @@ function finishVoting(room) {
 
     player.activePowers = player.activePowers.filter(x => x !== "double");
 
+    // Prime de participation (remplace l'ancien +10 ajouté par le navigateur).
+    player.coins += ROUND_BONUS_COINS;
+    earned += ROUND_BONUS_COINS;
+
     results.push({
       playerId: player.id,
       name: player.name,
@@ -590,15 +796,19 @@ function finishVoting(room) {
       score: player.score,
       valid,
       earned,
+      bonus: ROUND_BONUS_COINS,
       rows
     });
   }
 
   room.lastResults = results;
   room.status = "results";
+  room.votePlayers = [];
+  room.voteIndex = 0;
 
   io.to(room.code).emit("round:results", {
     round: room.round,
+    maxRounds: room.maxRounds,
     letter: room.letter,
     theme: room.theme,
     categories: activeCategories(room),
@@ -629,6 +839,11 @@ function submitVote(socket, data = {}) {
 
   if (!room.players.has(targetId)) {
     return sendError(socket, "Joueur introuvable.");
+  }
+
+  // On ne vote que pour le joueur actuellement présenté.
+  if (room.votePlayers[room.voteIndex] !== targetId) {
+    return sendError(socket, "Ce joueur n'est pas (ou plus) soumis au vote.");
   }
 
   if (!activeCategories(room).includes(category)) {
@@ -662,7 +877,7 @@ function submitVote(socket, data = {}) {
     reject: no
   });
 
-  void saveRoom(room);
+  scheduleSave(room);
 }
 
 /* ---------- SALONS ET JOUEURS ---------- */
@@ -678,9 +893,16 @@ function leaveRoom(socket) {
   if (!room) return;
 
   const player = room.players.get(socket.id);
+  if (!player) return;
+
+  const wasActiveSpinner =
+    room.status === "roulette" &&
+    room.spinnerId === socket.id &&
+    !!room.pendingTheme;
+
   room.players.delete(socket.id);
 
-  if (player && supabase) {
+  if (supabase) {
     void supabase.from("players")
       .update({ connected: false })
       .eq("room_code", roomCode)
@@ -692,27 +914,68 @@ function leaveRoom(socket) {
 
   if (!room.players.size) {
     stopTimers(room);
+    if (room.saveTimer) clearTimeout(room.saveTimer);
+    room.saveTimer = null;
     rooms.delete(roomCode);
     return;
   }
 
   if (room.hostId === socket.id) {
-    const next = room.players.values().next().value;
+    const next =
+      [...room.players.values()].find(p => !p.id.startsWith("offline_")) ||
+      room.players.values().next().value;
     room.hostId = next.id;
     for (const p of room.players.values()) p.host = p.id === next.id;
   }
 
-  // Si le joueur qui devait arrêter la roulette part, on passe au suivant.
-  if (room.status === "roulette" && room.spinnerId === socket.id) {
+  system(room, `${player.name} a quitté la salle.`);
+
+  const running = ["countdown", "roulette", "playing", "voting"].includes(room.status);
+
+  // Une partie à un seul joueur n'a pas de sens : retour au salon.
+  if (running && room.players.size < 2) {
+    resetToLobby(room, "Il ne reste plus assez de joueurs : retour au salon.");
+    return;
+  }
+
+  // Le joueur chargé d'arrêter la roulette est parti : on passe au suivant.
+  if (wasActiveSpinner) {
     if (room.rouletteTimer) clearTimeout(room.rouletteTimer);
     room.rouletteTimer = null;
     room.pendingTheme = null;
+    room.spinnerId = null;
     room.spinIndex++;
     spinNextTheme(room);
+    return;
+  }
+
+  if (room.status === "playing") {
+    if ([...room.players.values()].every(p => p.submitted)) {
+      finishRound(room, false);
+      return;
+    }
+  }
+
+  if (room.status === "voting") {
+    const pos = room.votePlayers.indexOf(socket.id);
+    if (pos !== -1) {
+      room.votePlayers.splice(pos, 1);
+      if (pos < room.voteIndex) {
+        room.voteIndex--;
+      } else if (pos === room.voteIndex) {
+        // Le joueur évalué est parti : on présente le suivant (ou on conclut).
+        if (room.voteIndex >= room.votePlayers.length) finishVoting(room);
+        else presentVoteTarget(room);
+        return;
+      }
+    }
+    if (!room.votePlayers.length) {
+      finishVoting(room);
+      return;
+    }
   }
 
   emitRoom(room);
-  system(room, "Un joueur a quitté la salle.");
 }
 
 async function restoreRooms() {
@@ -739,15 +1002,24 @@ async function restoreRooms() {
         const id = `offline_${crypto.randomUUID()}`;
         if (!firstId) firstId = id;
 
+        const cosmetics = Array.isArray(old.cosmetics)
+          ? old.cosmetics.filter(c => COSMETICS.some(x => x.id === c))
+          : [];
+
         players.set(id, {
           id,
           name: cleanName(old.name),
           score: Number(old.score) || 0,
-          coins: Number(old.coins) || 0,
+          coins: Math.max(0, Number(old.coins) || 0),
           ready: false,
           host: false,
-          avatar: safeAvatar(old.avatar),
-          inventory: Array.isArray(old.inventory) ? old.inventory : [],
+          avatar: safeAvatar(old.avatar, cosmetics),
+          inventory: Array.isArray(old.inventory)
+            ? old.inventory
+                .filter(p => POWERS.some(x => x.id === p))
+                .slice(0, MAX_INVENTORY)
+            : [],
+          cosmetics,
           activePowers: Array.isArray(old.activePowers) ? old.activePowers : [],
           shield: !!old.shield,
           submitted: false
@@ -758,7 +1030,9 @@ async function restoreRooms() {
         code: saved.code,
         hostId: firstId,
         players,
-        status: saved.status,
+        status: ["lobby", "results", "finished"].includes(saved.status)
+          ? saved.status
+          : "lobby",
         round: Number(saved.round) || 1,
         maxRounds: Number(saved.maxRounds) || 5,
         duration: Number(saved.duration) || 60,
@@ -769,6 +1043,8 @@ async function restoreRooms() {
           ? saved.selectedThemes
           : [],
         spinIndex: Number(saved.spinIndex) || 0,
+        spinId: 0,
+        spinOrder: [],
         spinnerId: null,
         pendingTheme: null,
         letter: saved.letter || null,
@@ -783,6 +1059,7 @@ async function restoreRooms() {
         rouletteTimer: null,
         voteTimer: null,
         nextSpinTimer: null,
+        saveTimer: null,
         lastResults: Array.isArray(saved.lastResults) ? saved.lastResults : []
       };
 
@@ -801,11 +1078,14 @@ async function restoreRooms() {
 io.on("connection", socket => {
   socket.emit("game:config", {
     categories: CATEGORIES,
-    powers: POWERS
+    powers: POWERS,
+    cosmetics: COSMETICS,
+    themesPerRound: THEMES_PER_ROUND
   });
 
   socket.on("room:create", async (data = {}) => {
     try {
+      if (!data || typeof data !== "object") data = {};
       leaveRoom(socket);
 
       let roomCode;
@@ -813,19 +1093,7 @@ io.on("connection", socket => {
         roomCode = makeCode();
       } while (rooms.has(roomCode));
 
-      const player = {
-        id: socket.id,
-        name: cleanName(data.name),
-        score: 0,
-        coins: 50,
-        ready: true,
-        host: true,
-        avatar: safeAvatar(data.avatar),
-        inventory: [],
-        activePowers: [],
-        shield: false,
-        submitted: false
-      };
+      const player = newPlayer(socket.id, data.name, data.avatar, true);
 
       const room = newRoom(
         roomCode,
@@ -853,51 +1121,71 @@ io.on("connection", socket => {
     }
   });
 
-  socket.on("room:join", async data => {
-    leaveRoom(socket);
+  socket.on("room:join", async (data = {}) => {
+    try {
+      if (!data || typeof data !== "object") data = {};
+      leaveRoom(socket);
 
-    const roomCode = String(data?.code || "").trim().toUpperCase();
-    const room = rooms.get(roomCode);
+      const roomCode = String(data.code || "").trim().toUpperCase();
+      if (!/^[0-9A-F]{6}$/.test(roomCode)) {
+        return sendError(socket, "Code de salon invalide.");
+      }
 
-    if (!room) return sendError(socket, "Salon introuvable.");
-    if (!["lobby", "results", "finished"].includes(room.status)) {
-      return sendError(socket, "La partie est en cours.");
+      const room = rooms.get(roomCode);
+
+      if (!room) return sendError(socket, "Salon introuvable.");
+      if (!["lobby", "results", "finished"].includes(room.status)) {
+        return sendError(socket, "La partie est en cours.");
+      }
+
+      const name = cleanName(data.name);
+
+      // Un joueur restauré depuis Supabase (id "offline_") peut être récupéré par son pseudo.
+      const ghost = [...room.players.values()].find(
+        p => p.id.startsWith("offline_") && norm(p.name) === norm(name)
+      );
+
+      if (!ghost && room.players.size >= MAX_PLAYERS) {
+        return sendError(socket, "Le salon est complet.");
+      }
+
+      let player;
+      if (ghost) {
+        room.players.delete(ghost.id);
+        player = ghost;
+        player.id = socket.id;
+        player.ready = false;
+        player.host = false;
+        player.submitted = false;
+        player.avatar = safeAvatar(data.avatar, player.cosmetics);
+      } else {
+        player = newPlayer(socket.id, name, data.avatar, false);
+      }
+
+      room.players.set(socket.id, player);
+
+      if (!room.players.has(room.hostId) || room.hostId.startsWith("offline_")) {
+        room.hostId = socket.id;
+        for (const p of room.players.values()) p.host = p.id === socket.id;
+        player.ready = true;
+      }
+
+      socket.join(room.code);
+      socket.data.roomCode = room.code;
+
+      socket.emit("room:joined", {
+        code: room.code,
+        playerId: socket.id,
+        isHost: room.hostId === socket.id
+      });
+
+      emitRoom(room);
+      system(room, `${player.name} a rejoint le salon.`);
+      await saveRoom(room);
+    } catch (error) {
+      console.error("Connexion au salon :", error);
+      sendError(socket, "Impossible de rejoindre le salon.");
     }
-    if (room.players.size >= 8) return sendError(socket, "Le salon est complet.");
-
-    const player = {
-      id: socket.id,
-      name: cleanName(data.name),
-      score: 0,
-      coins: 50,
-      ready: false,
-      host: false,
-      avatar: safeAvatar(data.avatar),
-      inventory: [],
-      activePowers: [],
-      shield: false,
-      submitted: false
-    };
-
-    room.players.set(socket.id, player);
-
-    if (!room.players.has(room.hostId) || room.hostId.startsWith("offline_")) {
-      room.hostId = socket.id;
-      for (const p of room.players.values()) p.host = p.id === socket.id;
-    }
-
-    socket.join(room.code);
-    socket.data.roomCode = room.code;
-
-    socket.emit("room:joined", {
-      code: room.code,
-      playerId: socket.id,
-      isHost: room.hostId === socket.id
-    });
-
-    emitRoom(room);
-    system(room, `${player.name} a rejoint le salon.`);
-    await saveRoom(room);
   });
 
   socket.on("player:ready", data => {
@@ -906,7 +1194,9 @@ io.on("connection", socket => {
 
     if (!room || !player || room.status !== "lobby") return;
 
-    player.ready = typeof data === "object" ? !!data.ready : !!data;
+    player.ready = typeof data === "object" && data !== null
+      ? !!data.ready
+      : !!data;
     emitRoom(room);
   });
 
@@ -914,8 +1204,14 @@ io.on("connection", socket => {
     const room = rooms.get(socket.data.roomCode);
     const player = playerForSocket(room, socket);
 
-    if (!room || !player ||
-        !["lobby", "results", "finished"].includes(room.status)) return;
+    if (!room || !player) return;
+
+    if (!["lobby", "results", "finished"].includes(room.status)) {
+      return sendError(
+        socket,
+        "Tu peux changer d'apparence uniquement entre les manches."
+      );
+    }
 
     const avatar = data?.avatar;
     if (!avatar || !MONSTER_IDS.includes(avatar.monsterId)) {
@@ -927,8 +1223,11 @@ io.on("connection", socket => {
     if (!ACCESSORIES.includes(avatar.accessory)) {
       return sendError(socket, "Accessoire invalide.");
     }
+    if (avatar.accessory !== "none" && !player.cosmetics.includes(avatar.accessory)) {
+      return sendError(socket, "Tu dois d'abord acheter cet accessoire.");
+    }
 
-    player.avatar = safeAvatar(avatar);
+    player.avatar = safeAvatar(avatar, player.cosmetics);
     emitRoom(room);
   });
 
@@ -940,11 +1239,17 @@ io.on("connection", socket => {
       return sendError(socket, "Seul l'hôte peut lancer la partie.");
     }
     if (room.status !== "lobby") return;
+
+    // Les joueurs restaurés qui ne sont jamais revenus ne doivent pas bloquer la partie.
+    purgeOfflinePlayers(room);
+
     if (room.players.size < 2) {
+      emitRoom(room);
       return sendError(socket, "Il faut au moins deux joueurs.");
     }
 
     room.round = 1;
+    room.lastResults = [];
 
     for (const p of room.players.values()) {
       p.score = 0;
@@ -956,17 +1261,21 @@ io.on("connection", socket => {
     startCountdown(room);
   });
 
-  // Seul le joueur désigné peut arrêter cette rotation.
-  socket.on("roulette:stop-request", () => {
+  // Seul le joueur désigné peut arrêter la roulette en cours.
+  // Le navigateur ne choisit jamais le thème : il demande seulement l'arrêt.
+  socket.on("roulette:stop-request", (data = {}) => {
     const room = rooms.get(socket.data.roomCode);
     const player = playerForSocket(room, socket);
 
     if (!room || !player || room.status !== "roulette") return;
+    if (!room.pendingTheme) return; // déjà validé : événement en double
     if (room.spinnerId !== player.id) {
       return sendError(socket, "C'est au joueur désigné d'arrêter la roulette.");
     }
+    if (throttled(socket, "roulette", 300)) return;
 
-    acceptPendingTheme(room, false);
+    const spinId = Number(data?.spinId);
+    acceptPendingTheme(room, false, Number.isFinite(spinId) ? spinId : undefined);
   });
 
   // Compatibilité avec l'ancien client : le thème envoyé par le navigateur est ignoré.
@@ -975,7 +1284,7 @@ io.on("connection", socket => {
     const player = playerForSocket(room, socket);
 
     if (!room || !player || room.status !== "roulette") return;
-    if (room.spinnerId !== player.id) return;
+    if (!room.pendingTheme || room.spinnerId !== player.id) return;
 
     acceptPendingTheme(room, false);
   });
@@ -1007,25 +1316,18 @@ io.on("connection", socket => {
 
   socket.on("answer:vote", data => submitVote(socket, data));
 
-  socket.on("vote:next-player", () => {
+  // Seul l'hôte fait avancer la phase de vote (un minuteur le fait aussi automatiquement).
+  socket.on("vote:next-player", (data = {}) => {
     const room = rooms.get(socket.data.roomCode);
-    if (!room || room.status !== "voting") return;
+    const player = playerForSocket(room, socket);
 
-    room.voteIndex++;
-
-    if (room.voteIndex >= room.votePlayers.length) {
-      finishVoting(room);
-      return;
+    if (!room || !player || room.status !== "voting") return;
+    if (room.hostId !== socket.id) {
+      return sendError(socket, "Seul l'hôte peut passer au joueur suivant.");
     }
 
-    const target = room.players.get(room.votePlayers[room.voteIndex]);
-    if (!target) return;
-
-    io.to(room.code).emit("vote:player", {
-      player: publicVotePlayer(room, target),
-      index: room.voteIndex,
-      total: room.votePlayers.length
-    });
+    const expected = Number.isInteger(data?.index) ? data.index : undefined;
+    advanceVote(room, expected);
   });
 
   socket.on("round:next", () => {
@@ -1037,6 +1339,10 @@ io.on("connection", socket => {
 
     if (room.round >= room.maxRounds) {
       room.status = "finished";
+
+      // Prime de fin de partie, attribuée une seule fois (statut results -> finished).
+      for (const p of room.players.values()) p.coins += FINISH_BONUS_COINS;
+
       emitRoom(room);
       io.to(room.code).emit("game:finished", roomState(room));
       return;
@@ -1051,33 +1357,69 @@ io.on("connection", socket => {
     const player = playerForSocket(room, socket);
 
     if (!room || !player) return;
+    if (throttled(socket, "shop", 350)) return;
 
     const id = typeof data === "string"
       ? data
-      : data?.powerId || data?.itemId;
+      : data?.itemId || data?.powerId;
 
-    const power = POWERS.find(x => x.id === id);
+    const cosmetic = typeof id === "string"
+      ? COSMETICS.find(x => x.id === id)
+      : null;
+    const power = typeof id === "string"
+      ? POWERS.find(x => x.id === id)
+      : null;
+    const item = cosmetic || power;
 
-    if (!power) return sendError(socket, "Objet inconnu.");
-    if (player.coins < power.price) {
-      return sendError(socket, "Pas assez de pièces.");
-    }
-    if (player.inventory.length >= 2) {
-      return sendError(socket, "Inventaire plein.");
-    }
+    if (!item) return sendError(socket, "Objet inconnu.");
 
-    player.coins -= power.price;
+    if (cosmetic) {
+      if (player.cosmetics.includes(id)) {
+        return sendError(socket, "Tu possèdes déjà cet objet.");
+      }
+      if (player.coins < item.price) {
+        return sendError(socket, "Pas assez de pièces.");
+      }
 
-    if (id === "double") {
-      player.activePowers.push("double");
-    } else if (id === "shield") {
-      player.shield = true;
+      player.coins -= item.price;
+      player.cosmetics.push(id);
+      // L'accessoire acheté est équipé immédiatement.
+      player.avatar = safeAvatar(
+        { ...player.avatar, accessory: id },
+        player.cosmetics
+      );
     } else {
-      player.inventory.push(id);
+      if (!power.available) {
+        return sendError(socket, "Ce pouvoir n'est pas encore disponible.");
+      }
+      if (player.coins < power.price) {
+        return sendError(socket, "Pas assez de pièces.");
+      }
+      if (id === "double" && player.activePowers.includes("double")) {
+        return sendError(socket, "Le multiplicateur est déjà actif.");
+      }
+      if (id === "shield" && player.shield) {
+        return sendError(socket, "Ton bouclier est déjà actif.");
+      }
+      if (id !== "double" && id !== "shield" &&
+          player.inventory.length >= MAX_INVENTORY) {
+        return sendError(socket, "Inventaire plein.");
+      }
+
+      player.coins -= power.price;
+
+      if (id === "double") {
+        player.activePowers.push("double");
+      } else if (id === "shield") {
+        player.shield = true;
+      } else {
+        player.inventory.push(id);
+      }
     }
 
     socket.emit("shop:bought", {
-      powerId: id,
+      kind: cosmetic ? "cosmetic" : "power",
+      powerId: power ? id : undefined,
       itemId: id,
       coins: player.coins,
       message: "Achat effectué !"
@@ -1091,9 +1433,10 @@ io.on("connection", socket => {
     const player = playerForSocket(room, socket);
 
     if (!room || !player) return;
+    if (throttled(socket, "power", 300)) return;
 
-    const id = data?.powerId;
-    const target = room.players.get(data?.targetId);
+    const id = typeof data?.powerId === "string" ? data.powerId : "";
+    const target = room.players.get(String(data?.targetId || ""));
 
     if (!player.inventory.includes(id)) {
       return sendError(socket, "Tu ne possèdes pas ce pouvoir.");
@@ -1116,6 +1459,7 @@ io.on("connection", socket => {
       }
       if (target.shield) {
         target.shield = false;
+        player.inventory = player.inventory.filter(x => x !== id);
         emitRoom(room);
         return sendError(socket, "Le bouclier a bloqué le pouvoir.");
       }
@@ -1150,6 +1494,7 @@ io.on("connection", socket => {
       .slice(0, 180);
 
     if (!room || !player || !message) return;
+    if (throttled(socket, "chat", 400)) return;
 
     io.to(room.code).emit("chat:message", {
       name: player.name,
@@ -1162,6 +1507,8 @@ io.on("connection", socket => {
         room_code: room.code,
         player_name: player.name,
         content: message
+      }).then(({ error }) => {
+        if (error) console.error("Message Supabase :", error.message);
       });
     }
   });
@@ -1169,10 +1516,11 @@ io.on("connection", socket => {
   socket.on("chat:private", data => {
     const room = rooms.get(socket.data.roomCode);
     const player = playerForSocket(room, socket);
-    const target = room?.players.get(data?.targetId);
+    const target = room?.players.get(String(data?.targetId || ""));
     const message = String(data?.text || "").trim().slice(0, 180);
 
     if (!player || !target || !message) return;
+    if (throttled(socket, "private", 400)) return;
 
     if (target.shield) {
       target.shield = false;
