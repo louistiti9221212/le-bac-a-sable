@@ -1,7 +1,8 @@
+
 {
   "name": "le-bac-a-sable-multijoueur",
   "version": "1.0.0",
-  "description": "Jeu de petit bac multijoueur avec Express et Socket.IO",
+  "description": "Jeu de petit bac multijoueur avec Express, Socket.IO et Supabase",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -10,7 +11,9 @@
     "node": ">=20"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.76.1",
     "express": "^4.21.2",
     "socket.io": "^4.8.1"
   }
 }
+
