@@ -1,707 +1,613 @@
 
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ALPHA BLITZ — Le Petit Bac</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ALPHA BLITZ — Le Bac à Sable</title>
 
 <style>
 :root {
-  --ink: #292641;
-  --pink: #ffb6ce;
-  --yellow: #ffe27a;
-  --blue: #c8f1f7;
-  --purple: #e4d8ff;
-  --cream: #fffaf0;
-  --green: #c9f2d1;
+  --ink: #302b48;
+  --purple: #7865db;
+  --pink: #ffd9e7;
+  --blue: #dcefff;
+  --yellow: #fff0b8;
+  --mint: #d9f7e8;
+  --line: #e9e3f3;
+  --muted: #77718e;
 }
-
 * { box-sizing: border-box; }
-
 body {
   margin: 0;
-  background:
-    radial-gradient(#e9dff8 1.5px, transparent 1.5px),
-    var(--cream);
-  background-size: 26px 26px;
   color: var(--ink);
-  font-family: "Trebuchet MS", sans-serif;
+  font-family: "Trebuchet MS", system-ui, sans-serif;
+  background: linear-gradient(135deg,#fff8fb,#f1efff,#effaff);
+  min-height: 100vh;
 }
-
-header {
-  height: 76px;
-  padding: 12px 25px;
-  background: #fffdf8;
-  border-bottom: 3px solid var(--ink);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.logo {
-  font-size: 25px;
-  font-weight: 1000;
-  letter-spacing: 1px;
-}
-
-.logo span {
-  display: inline-block;
-  padding: 8px 12px;
-  background: var(--yellow);
-  border: 2px solid var(--ink);
-  border-radius: 12px;
-  box-shadow: 3px 4px 0 var(--ink);
-  transform: rotate(-2deg);
-}
-
-.header-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-weight: bold;
-}
-
-.pill {
-  background: white;
-  padding: 8px 12px;
-  border: 2px solid var(--ink);
-  border-radius: 12px;
-}
-
-main {
-  max-width: 1500px;
-  margin: 22px auto;
-  padding: 0 18px;
-}
-
-.game-layout {
-  display: grid;
-  grid-template-columns: minmax(400px, 1.65fr)
-                         minmax(240px, .85fr)
-                         minmax(230px, .8fr);
-  gap: 16px;
-  align-items: start;
-}
-
-.panel {
-  background: white;
-  border: 2px solid var(--ink);
-  border-radius: 20px;
-  padding: 17px;
-  box-shadow: 4px 5px 0 #29264118;
-  min-width: 0;
-}
-
-h2 {
-  font-size: 19px;
-  margin: 0 0 14px;
-}
-
-.subtitle {
-  font-size: 12px;
-  color: #77718b;
-  margin-top: -8px;
-  margin-bottom: 15px;
-}
-
-.game-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 16px;
-}
-
-.letter {
-  background: var(--pink);
-  border: 2px solid var(--ink);
-  border-radius: 14px;
-  padding: 9px 16px;
-  font-size: 25px;
-  font-weight: 1000;
-  box-shadow: 3px 3px 0 var(--ink);
-}
-
-.timer {
-  font-weight: 1000;
-  font-size: 21px;
-}
-
-.category-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.cat {
-  padding: 12px;
-  border: 2px solid var(--ink);
-  border-radius: 14px;
-  min-width: 0;
-  transition: transform .15s;
-}
-
-.cat:hover { transform: translateY(-2px) rotate(-.4deg); }
-.cat:nth-child(4n+1) { background: #fff0b9; }
-.cat:nth-child(4n+2) { background: var(--purple); }
-.cat:nth-child(4n+3) { background: var(--blue); }
-.cat:nth-child(4n) { background: #ffe2eb; }
-
-.cat label {
-  display: block;
-  font-weight: 900;
-  font-size: 13px;
-  margin-bottom: 8px;
-}
-
-.cat input {
-  width: 100%;
-  min-width: 0;
-  padding: 9px;
-  border: 1.5px solid #aaa2bf;
-  border-radius: 8px;
-  font: inherit;
-  background: #ffffffd9;
-  outline-color: #b7a1f5;
-}
-
+button,input,select { font: inherit; }
 button {
-  font-family: inherit;
-  font-weight: 900;
+  border: 0;
+  border-radius: 14px;
+  padding: 12px 16px;
+  font-weight: 800;
   cursor: pointer;
-  color: var(--ink);
-  background: var(--yellow);
-  border: 2px solid var(--ink);
-  border-radius: 11px;
-  padding: 10px 13px;
-  box-shadow: 2px 3px 0 var(--ink);
   transition: transform .15s;
 }
-
 button:hover { transform: translateY(-2px); }
-button:active { transform: translateY(1px); box-shadow: none; }
-
-.primary {
-  width: 100%;
-  margin-top: 15px;
-  background: var(--pink);
-  font-size: 15px;
+.primary { background: var(--purple); color: white; }
+.soft { background: white; border: 1px solid var(--line); color: var(--ink); }
+.pink { background: var(--pink); color: var(--ink); }
+.hidden { display: none !important; }
+.wrap { max-width: 1150px; padding: 24px; margin: auto; }
+.brand { display: flex; gap: 12px; align-items: center; margin-bottom: 22px; }
+.logo {
+  display: grid; place-items: center;
+  width: 50px; height: 50px; border-radius: 16px;
+  background: var(--yellow); font-size: 27px;
 }
-
-.notice {
-  margin-top: 10px;
-  font-size: 12px;
-  min-height: 16px;
-  color: #625b78;
+.brand h1 { margin: 0; font-size: clamp(23px,4vw,34px); }
+.brand p { margin: 4px 0 0; color: var(--muted); }
+.panel {
+  padding: 24px; border-radius: 24px;
+  background: #ffffffdf; border: 1px solid white;
+  box-shadow: 0 12px 35px #51407812;
 }
-
-/* Téléphone et chat */
-
-.phone {
-  background: #f6f1ff;
-  border: 3px solid var(--ink);
-  border-radius: 28px;
-  padding: 10px;
-  box-shadow: 4px 5px 0 #29264122;
+h2 { margin: 0 0 8px; }
+.sub { color: var(--muted); margin-top: 0; }
+.field { display: flex; flex-direction: column; gap: 7px; margin: 14px 0; }
+.field label { font-size: 13px; font-weight: 800; }
+.field input, .field select {
+  width: 100%; padding: 13px;
+  border: 1px solid var(--line); border-radius: 12px;
+  background: white; color: var(--ink);
 }
-
-.phone-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 7px 5px 12px;
-  font-size: 13px;
-  font-weight: 900;
+#startScreen, #lobbyScreen { max-width: 800px; margin: 4vh auto; }
+.start-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.choice { padding: 20px; background: white; border: 2px solid var(--line); border-radius: 20px; }
+.choice h3 { margin-top: 0; }
+.choice p, .note { color: var(--muted); font-size: 13px; line-height: 1.5; }
+.room-top { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.room-code {
+  padding: 12px 18px; background: var(--yellow);
+  border-radius: 14px; font-weight: 1000; font-size: 24px;
+  letter-spacing: 4px; text-align: center;
 }
-
-.online {
-  color: #24834a;
-  font-size: 11px;
-}
-
-.chatbox {
-  height: 310px;
-  overflow-y: auto;
-  padding: 10px;
-  background: white;
-  border: 2px solid var(--ink);
-  border-radius: 17px;
-}
-
-.msg {
-  background: var(--purple);
-  border: 1.5px solid var(--ink);
-  border-radius: 12px 12px 12px 4px;
-  padding: 9px;
-  margin-bottom: 9px;
-  font-size: 12px;
-  overflow-wrap: anywhere;
-}
-
-.msg:nth-child(even) { background: var(--blue); }
-
-.msg b {
-  display: block;
-  margin-bottom: 4px;
-}
-
-.chat-send {
-  display: flex;
-  gap: 7px;
-  margin-top: 10px;
-}
-
-.chat-send input {
-  width: 100%;
-  min-width: 0;
-  padding: 10px;
-  border: 2px solid var(--ink);
-  border-radius: 10px;
-  font: inherit;
-}
-
-.chat-send button { padding: 8px 12px; }
-
-/* Colonne de droite */
-
-.right-column {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
+.players { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 18px 0; }
 .player {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 0;
-  border-bottom: 1.5px dashed #d8d1e8;
+  display: flex; align-items: center; gap: 10px;
+  background: white; border: 1px solid var(--line);
+  border-radius: 14px; padding: 12px;
 }
+.avatar { background: var(--blue); border-radius: 12px; padding: 9px; }
+.player small { display: block; color: var(--muted); margin-top: 3px; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
 
-.player:last-child { border-bottom: none; }
-
-.avatar {
-  display: grid;
-  place-items: center;
-  width: 39px;
-  height: 39px;
-  flex-shrink: 0;
-  border: 2px solid var(--ink);
-  border-radius: 12px;
-  background: var(--blue);
-  font-size: 20px;
+#gameScreen { max-width: 1200px; margin: auto; padding: 24px; }
+.game-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.timer { padding: 12px 16px; background: var(--yellow); border-radius: 14px; font-weight: 900; }
+.layout { display: grid; grid-template-columns: minmax(0,1fr) 290px; gap: 16px; }
+.answers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.answer { padding: 14px; border: 1px solid var(--line); border-radius: 16px; background: white; }
+.answer label { display: block; font-size: 13px; font-weight: 900; margin-bottom: 8px; }
+.answer input { width: 100%; padding: 11px; border: 1px solid var(--line); border-radius: 10px; }
+.side { display: flex; flex-direction: column; gap: 14px; }
+.score-row, .power-row {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--line);
 }
+.chat-log { height: 130px; overflow-y: auto; background: #faf8ff; padding: 10px; border-radius: 12px; font-size: 13px; }
+.chat-line { margin-bottom: 7px; overflow-wrap: anywhere; }
+.chat-form { display: flex; gap: 6px; margin-top: 8px; }
+.chat-form input { width: 0; flex: 1; min-width: 0; padding: 10px; border: 1px solid var(--line); border-radius: 10px; }
+.chat-form button { padding: 10px; }
+.power-row button { padding: 8px 10px; }
+.footer-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
 
-.player-info {
-  flex: 1;
-  min-width: 0;
+#countdownOverlay {
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center; padding: 24px; color: white;
+  background: radial-gradient(circle at 50% 35%,#a296ff,#6553c5 50%,#30255e);
 }
-
-.player-name {
-  font-size: 13px;
-  font-weight: 900;
+.count-label { font-size: clamp(18px,3vw,28px); font-weight: 900; letter-spacing: 6px; }
+.count-number {
+  font-size: clamp(130px,35vw,330px);
+  line-height: 1; font-weight: 1000; margin: 15px 0;
+  text-shadow: 0 12px 0 #34266b55;
+  animation: pop .65s ease both;
 }
-
-.player-detail {
-  color: #77718b;
-  font-size: 11px;
-  margin-top: 3px;
+.count-caption { font-size: clamp(20px,4vw,34px); font-weight: 900; }
+.dots { color: var(--yellow); letter-spacing: 12px; font-size: 24px; margin-top: 20px; }
+@keyframes pop {
+  0% { transform: scale(.5); opacity: .2; }
+  70% { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); }
 }
-
-.score {
-  font-weight: 1000;
-  font-size: 13px;
-  white-space: nowrap;
+#toast {
+  position: fixed; z-index: 2000; bottom: 18px; left: 50%;
+  transform: translateX(-50%); max-width: 90%;
+  background: var(--ink); color: white;
+  padding: 12px 18px; border-radius: 12px; text-align: center;
 }
-
-.inventory {
-  background: #fff7d7;
+@media(max-width:800px) {
+  .layout { grid-template-columns: 1fr; }
+  .side { display: grid; grid-template-columns: 1fr 1fr; }
 }
-
-.power {
-  padding: 10px;
-  border: 2px solid var(--ink);
-  border-radius: 13px;
-  background: white;
-  margin-bottom: 10px;
-}
-
-.power:last-child { margin-bottom: 0; }
-
-.power-head {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-}
-
-.power-icon {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  background: var(--purple);
-  border: 1.5px solid var(--ink);
-  border-radius: 11px;
-  font-size: 22px;
-}
-
-.power-name {
-  font-size: 13px;
-  font-weight: 1000;
-}
-
-.power-description {
-  color: #77718b;
-  font-size: 11px;
-  margin-top: 4px;
-}
-
-.power button {
-  width: 100%;
-  margin-top: 10px;
-  padding: 7px;
-  font-size: 12px;
-  background: var(--green);
-}
-
-.power button:disabled {
-  opacity: .5;
-  cursor: not-allowed;
-}
-
-.inventory-footer {
-  font-size: 12px;
-  font-weight: bold;
-  margin-top: 12px;
-  display: flex;
-  justify-content: space-between;
-}
-
-@media (max-width: 1050px) {
-  .game-layout {
-    grid-template-columns: minmax(0, 1.4fr) minmax(230px, .8fr);
-  }
-  .right-column { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; }
-}
-
-@media (max-width: 650px) {
-  header { padding: 10px 14px; }
-  .logo { font-size: 18px; }
-  .header-info { gap: 5px; font-size: 11px; }
-  main { padding: 0 10px; }
-  .game-layout, .right-column { grid-template-columns: 1fr; }
-  .right-column { grid-column: auto; display: flex; }
-  .category-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .chatbox { height: 250px; }
+@media(max-width:550px) {
+  .start-grid, .players, .answers, .side { grid-template-columns: 1fr; }
+  .wrap, #gameScreen { padding: 14px; }
+  .panel { padding: 17px; }
 }
 </style>
 </head>
 
 <body>
 
-<header>
-  <div class="logo">⚡ <span>ALPHA BLITZ</span></div>
-  <div class="header-info">
-    <span class="pill">🪙 <span id="coins">50</span></span>
-    <span class="pill">👤 Joueur</span>
+<!-- MENU PRINCIPAL -->
+<div id="startScreen" class="wrap">
+  <header class="brand">
+    <div class="logo">⚡</div>
+    <div>
+      <h1>ALPHA BLITZ</h1>
+      <p>Le Bac à Sable · Trouve les mots avant la fin !</p>
+    </div>
+  </header>
+
+  <section class="panel">
+    <h2>On joue ensemble ? 🎉</h2>
+    <p class="sub">Crée une salle privée ou rejoins une salle avec un code.</p>
+
+    <div class="start-grid">
+      <div class="choice">
+        <h3>✨ Créer une salle</h3>
+        <p>Tu deviens l'hôte et tu invites tes amis.</p>
+        <div class="field">
+          <label for="hostName">Ton pseudo</label>
+          <input id="hostName" maxlength="18" placeholder="Ton pseudo">
+        </div>
+        <button class="primary" style="width:100%" onclick="createRoom()">Créer ma salle</button>
+      </div>
+
+      <div class="choice">
+        <h3>🚪 Rejoindre une salle</h3>
+        <p>Entre le code de la salle de ton ami.</p>
+        <div class="field">
+          <label for="joinName">Ton pseudo</label>
+          <input id="joinName" maxlength="18" placeholder="Ton pseudo">
+        </div>
+        <div class="field">
+          <label for="joinCode">Code de la salle</label>
+          <input id="joinCode" maxlength="5" placeholder="ABCDE" style="text-transform:uppercase">
+        </div>
+        <button class="soft" style="width:100%" onclick="joinRoom()">Rejoindre la salle</button>
+      </div>
+    </div>
+    <p class="note">
+      Version de démonstration : les salles sont simulées dans cette page.
+      Le jeu en ligne entre plusieurs appareils nécessitera un serveur.
+    </p>
+  </section>
+</div>
+
+<!-- SALON D'ATTENTE -->
+<div id="lobbyScreen" class="wrap hidden">
+  <header class="brand">
+    <div class="logo">⚡</div>
+    <div><h1>ALPHA BLITZ</h1><p>Salon privé</p></div>
+  </header>
+
+  <section class="panel">
+    <div class="room-top">
+      <div>
+        <h2>La salle est prête ! 🥳</h2>
+        <p class="sub">Partage ce code avec tes amis.</p>
+      </div>
+      <div>
+        <div class="room-code" id="roomCodeDisplay">ABCDE</div>
+        <button class="soft" style="width:100%;margin-top:8px" onclick="copyCode()">Copier le code</button>
+      </div>
+    </div>
+
+    <h3>Joueurs <span id="playerCount">(1)</span></h3>
+    <div id="playersList" class="players"></div>
+
+    <div class="field" style="max-width:220px">
+      <label for="roundLength">Durée de la manche</label>
+      <select id="roundLength">
+        <option value="60">60 secondes</option>
+        <option value="90" selected>90 secondes</option>
+        <option value="120">120 secondes</option>
+      </select>
+    </div>
+
+    <div class="actions">
+      <button id="startButton" class="primary" onclick="startCountdown()">🚀 Lancer la partie</button>
+      <button class="pink" onclick="addDemoFriend()">＋ Ajouter un ami (démo)</button>
+      <button class="soft" onclick="leaveRoom()">Quitter la salle</button>
+    </div>
+    <p class="note" id="lobbyNote">Attends tes amis, puis lance la partie !</p>
+  </section>
+</div>
+
+<!-- JEU -->
+<main id="gameScreen" class="hidden">
+  <header class="brand">
+    <div class="logo">⚡</div>
+    <div>
+      <h1>ALPHA BLITZ</h1>
+      <p>Lettre de la manche : <strong id="roundLetter">M</strong></p>
+    </div>
+  </header>
+
+  <div class="game-head">
+    <div>
+      <h2>À toi de jouer ! ✍️</h2>
+      <p class="sub">Un mot par catégorie, puis valide tes réponses.</p>
+    </div>
+    <div class="timer">⏱️ <span id="timer">90</span> s</div>
   </div>
-</header>
 
-<main>
-  <div class="game-layout">
-
-    <!-- CENTRE : GRILLE DU PETIT BAC -->
+  <div class="layout">
     <section class="panel">
-      <div class="game-top">
-        <div>
-          <h2>📝 Le Petit Bac</h2>
-          <div class="subtitle">Trouve un mot pour chaque catégorie !</div>
-        </div>
-        <div class="letter" id="letter">B</div>
-      </div>
-
-      <div class="game-top">
-        <span class="pill">⚡ Manche <span id="round">1</span></span>
-        <span class="timer" id="timer">01:30</span>
-      </div>
-
-      <div class="category-grid" id="grid"></div>
-
-      <button class="primary" id="submitBtn" onclick="submitAnswers()">
-        ✓ Envoyer mes réponses
-      </button>
-      <div class="notice" id="answerNotice">
-        Écris tes réponses avant la fin du temps !
+      <div id="answerGrid" class="answers"></div>
+      <div class="footer-actions">
+        <button class="primary" onclick="submitAnswers()">Valider mes réponses ✓</button>
+        <button class="soft" onclick="backToLobby()">Retour au salon</button>
       </div>
     </section>
 
-    <!-- À CÔTÉ : TÉLÉPHONE / CHAT -->
-    <section class="phone">
-      <div class="phone-top">
-        <span>💬 Discussion</span>
-        <span class="online">● En ligne</span>
-      </div>
-
-      <div class="chatbox" id="chatbox" aria-live="polite">
-        <div class="msg">
-          <b>🎮 Système</b>
-          Bienvenue dans la salle ALPHA BLITZ !
-        </div>
-        <div class="msg">
-          <b>Emma</b>
-          Bonne chance à tous ! ✨
-        </div>
-        <div class="msg">
-          <b>Lucas</b>
-          Je vais gagner cette manche 😎
-        </div>
-      </div>
-
-      <form class="chat-send" id="chatForm">
-        <input id="chatInput" maxlength="250"
-          placeholder="Écrire un message..." autocomplete="off"
-          aria-label="Message à envoyer">
-        <button type="submit" aria-label="Envoyer">➤</button>
-      </form>
-    </section>
-
-    <!-- À DROITE : SCORES ET INVENTAIRE -->
-    <aside class="right-column">
+    <aside class="side">
+      <section class="panel">
+        <h3 style="margin-top:0">🏆 Scores</h3>
+        <div id="scoreList"></div>
+      </section>
 
       <section class="panel">
-        <h2>🏆 Classement</h2>
-        <div class="subtitle">Les meilleurs de la salle</div>
-        <div id="players"></div>
-      </section>
-
-      <section class="panel inventory">
-        <h2>🎒 Mes pouvoirs</h2>
-        <div class="subtitle">Utilise tes bonus au bon moment !</div>
-
-        <div id="powers"></div>
-
-        <div class="inventory-footer">
-          <span>🪙 Pièces</span>
-          <span id="inventoryCoins">50</span>
+        <h3 style="margin-top:0">💬 Discussion</h3>
+        <div id="chatLog" class="chat-log">
+          <div class="chat-line"><b>Système :</b> Bonne chance à tous !</div>
         </div>
+        <form class="chat-form" onsubmit="sendChat(event)">
+          <input id="chatInput" maxlength="180" placeholder="Écrire un message…">
+          <button class="primary">➤</button>
+        </form>
       </section>
 
+      <section class="panel">
+        <h3 style="margin-top:0">🎒 Pouvoirs</h3>
+        <div class="power-row">
+          <span>💡 Indice <small>(3 pièces)</small></span>
+          <button class="soft" onclick="usePower('hint')">Utiliser</button>
+        </div>
+        <div class="power-row">
+          <span>⏳ +15 sec <small>(5 pièces)</small></span>
+          <button class="soft" onclick="usePower('time')">Utiliser</button>
+        </div>
+        <div class="power-row">
+          <span>🛡️ Bouclier <small>(4 pièces)</small></span>
+          <button class="soft" onclick="usePower('shield')">Utiliser</button>
+        </div>
+        <p>Pièces : <b id="coins">10</b> 🪙</p>
+      </section>
     </aside>
   </div>
 </main>
 
+<!-- COMPTE À REBOURS PLEIN ÉCRAN -->
+<div id="countdownOverlay" class="hidden" role="dialog" aria-modal="true">
+  <div>
+    <div class="count-label">ALPHA BLITZ</div>
+    <div id="countNumber" class="count-number">3</div>
+    <div id="countCaption" class="count-caption">Prépare-toi !</div>
+    <div class="dots">● ● ●</div>
+  </div>
+</div>
+
+<div id="toast" class="hidden"></div>
+
 <script>
 const categories = [
-  { icon: "👤", name: "Prénom" },
-  { icon: "🌍", name: "Pays ou ville" },
-  { icon: "🐾", name: "Animal" },
-  { icon: "🍎", name: "Fruit ou légume" },
-  { icon: "🎬", name: "Film ou série" },
-  { icon: "⚽", name: "Sportif" },
-  { icon: "📦", name: "Objet" },
-  { icon: "🍽️", name: "Aliment" }
+  "Prénom", "Animal", "Ville / pays", "Métier",
+  "Objet", "Nourriture", "Marque", "Personnage"
 ];
+const letters = ["A","B","C","D","L","M","P","S","T"];
 
-let currentLetter = "B";
-let seconds = 90;
-let coins = 50;
+let roomCode = "";
+let players = [];
+let currentPlayer = "";
+let isHost = false;
+let timeLeft = 90;
+let roundSeconds = 90;
+let timerInterval = null;
+let coins = 10;
 let submitted = false;
 
-const players = [
-  { name: "Toi", avatar: "😎", score: 120, you: true },
-  { name: "Emma", avatar: "🐱", score: 95 },
-  { name: "Lucas", avatar: "🦊", score: 80 },
-  { name: "Hugo", avatar: "🐸", score: 55 }
-];
+function safeName(value, fallback) {
+  return (value || "").trim().slice(0,18) || fallback;
+}
 
-const powers = [
-  {
-    id: "hint",
-    icon: "💡",
-    name: "Petit indice",
-    description: "Obtiens une idée pour une catégorie.",
-    cost: 10
-  },
-  {
-    id: "time",
-    icon: "⏳",
-    name: "Temps bonus",
-    description: "Ajoute 15 secondes à la manche.",
-    cost: 15
-  },
-  {
-    id: "shield",
-    icon: "🛡️",
-    name: "Bouclier",
-    description: "Protège un bonus pour plus tard.",
-    cost: 20
+function makeCode() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  for (let i=0; i<5; i++) {
+    code += chars[Math.floor(Math.random()*chars.length)];
   }
-];
+  return code;
+}
 
-const usedPowers = new Set();
+function createRoom() {
+  currentPlayer = safeName(document.getElementById("hostName").value, "Joueur 1");
+  isHost = true;
+  roomCode = makeCode();
+  players = [{name:currentPlayer, host:true, score:0}];
+  showLobby();
+}
 
-function renderGrid() {
-  document.getElementById("grid").innerHTML =
-    categories.map((cat, i) => `
-      <div class="cat">
-        <label for="answer${i}">${cat.icon} ${cat.name}</label>
-        <input id="answer${i}" maxlength="50"
-          placeholder="Un mot en ${currentLetter}..."
-          autocomplete="off">
-      </div>
-    `).join("");
+function joinRoom() {
+  const name = safeName(document.getElementById("joinName").value, "Joueur");
+  const code = document.getElementById("joinCode").value.trim().toUpperCase();
+
+  if (code.length !== 5) {
+    toast("Entre un code de salle de 5 caractères.");
+    return;
+  }
+
+  currentPlayer = name;
+  isHost = false;
+  roomCode = code;
+
+  // Simulation uniquement : il n'y a pas de connexion à un serveur.
+  players = [
+    {name:"Hôte (démo)", host:true, score:0},
+    {name:currentPlayer, host:false, score:0}
+  ];
+  showLobby();
+  document.getElementById("lobbyNote").textContent =
+    "Salle simulée : ce code ne retrouve pas une vraie salle sur un autre appareil.";
+  document.getElementById("startButton").classList.add("hidden");
+}
+
+function showLobby() {
+  document.getElementById("startScreen").classList.add("hidden");
+  document.getElementById("gameScreen").classList.add("hidden");
+  document.getElementById("lobbyScreen").classList.remove("hidden");
+  document.getElementById("roomCodeDisplay").textContent = roomCode;
+  document.getElementById("lobbyNote").textContent = isHost
+    ? "Tu es l'hôte. Invite tes amis puis lance la partie."
+    : "Mode de démonstration.";
+  document.getElementById("startButton").classList.toggle("hidden", !isHost);
+  renderPlayers();
 }
 
 function renderPlayers() {
-  const sorted = [...players].sort((a, b) => b.score - a.score);
-
-  document.getElementById("players").innerHTML = sorted.map((p, i) => `
+  document.getElementById("playerCount").textContent = "(" + players.length + ")";
+  document.getElementById("playersList").innerHTML = players.map(p => `
     <div class="player">
-      <div class="avatar">${p.avatar}</div>
-      <div class="player-info">
-        <div class="player-name">${i + 1}. ${p.name}</div>
-        <div class="player-detail">${p.you ? "C'est toi !" : "Joueur"}</div>
-      </div>
-      <div class="score">${p.score} pts</div>
+      <div class="avatar">${p.host ? "👑" : "🙂"}</div>
+      <div><b>${escapeHtml(p.name)}</b>
+      <small>${p.host ? "Hôte" : "Joueur"}</small></div>
     </div>
   `).join("");
 }
 
-function renderPowers() {
-  document.getElementById("powers").innerHTML = powers.map(p => {
-    const used = usedPowers.has(p.id);
-    return `
-      <div class="power">
-        <div class="power-head">
-          <div class="power-icon">${p.icon}</div>
-          <div>
-            <div class="power-name">${p.name}</div>
-            <div class="power-description">${p.description}</div>
-          </div>
-        </div>
-        <button onclick="usePower('${p.id}')"
-          ${used ? "disabled" : ""}>
-          ${used ? "Utilisé ✓" : `Utiliser · 🪙 ${p.cost}`}
-        </button>
-      </div>
-    `;
-  }).join("");
-
-  document.getElementById("coins").textContent = coins;
-  document.getElementById("inventoryCoins").textContent = coins;
-}
-
-function addMessage(name, text, system = false) {
-  const box = document.getElementById("chatbox");
-  const msg = document.createElement("div");
-  msg.className = "msg";
-
-  const author = document.createElement("b");
-  author.textContent = system ? "🎮 Système" : name;
-
-  const content = document.createElement("span");
-  content.textContent = text;
-
-  msg.append(author, content);
-  box.appendChild(msg);
-  box.scrollTop = box.scrollHeight;
-}
-
-document.getElementById("chatForm").addEventListener("submit", e => {
-  e.preventDefault();
-  const input = document.getElementById("chatInput");
-  const message = input.value.trim();
-
-  if (!message) return;
-
-  addMessage("😎 Toi", message);
-  input.value = "";
-});
-
-function usePower(id) {
-  if (usedPowers.has(id)) return;
-
-  const power = powers.find(p => p.id === id);
-  if (!power || coins < power.cost) {
-    addMessage("", "Tu n'as pas assez de pièces pour ce pouvoir.", true);
+function addDemoFriend() {
+  if (players.length >= 8) {
+    toast("La salle est pleine : 8 joueurs maximum.");
     return;
   }
-
-  if (id === "hint") {
-    addMessage("", "Indice : pense à un mot simple qui commence par " +
-      currentLetter + ".", true);
-  }
-
-  if (id === "time") {
-    seconds += 15;
-    addMessage("", "Tu as gagné 15 secondes ! ⏳", true);
-  }
-
-  if (id === "shield") {
-    addMessage("", "Ton bouclier est activé pour cette manche ! 🛡️", true);
-  }
-
-  coins -= power.cost;
-  usedPowers.add(id);
-  renderPowers();
+  players.push({name:"Ami " + players.length, host:false, score:0});
+  renderPlayers();
+  toast("Ami ajouté pour la démonstration.");
 }
 
-function submitAnswers() {
-  if (submitted) return;
-
-  const answers = categories.map((cat, i) => ({
-    category: cat.name,
-    answer: document.getElementById("answer" + i).value.trim()
-  }));
-
-  const count = answers.filter(a => a.answer.length > 0).length;
-
-  if (count === 0) {
-    document.getElementById("answerNotice").textContent =
-      "Écris au moins une réponse avant d'envoyer !";
-    return;
+async function copyCode() {
+  try {
+    await navigator.clipboard.writeText(roomCode);
+    toast("Code copié : " + roomCode);
+  } catch {
+    toast("Code de la salle : " + roomCode);
   }
-
-  submitted = true;
-  document.getElementById("submitBtn").disabled = true;
-  document.getElementById("answerNotice").textContent =
-    `${count} réponse(s) envoyée(s) ! Démo locale : le serveur doit calculer les points.`;
-
-  addMessage("", "Tu as envoyé tes réponses !", true);
 }
 
-function updateTimer() {
-  const timer = document.getElementById("timer");
-  const minutes = String(Math.floor(seconds / 60)).padStart(2, "0");
-  const secs = String(seconds % 60).padStart(2, "0");
-  timer.textContent = `${minutes}:${secs}`;
+function leaveRoom() {
+  stopTimer();
+  document.getElementById("lobbyScreen").classList.add("hidden");
+  document.getElementById("gameScreen").classList.add("hidden");
+  document.getElementById("countdownOverlay").classList.add("hidden");
+  document.getElementById("startScreen").classList.remove("hidden");
+}
 
-  if (seconds <= 10) timer.style.color = "#e84c78";
-  else timer.style.color = "var(--ink)";
+function startCountdown() {
+  roundSeconds = Number(document.getElementById("roundLength").value) || 90;
+  document.getElementById("lobbyScreen").classList.add("hidden");
 
-  if (seconds === 0) {
+  const overlay = document.getElementById("countdownOverlay");
+  const number = document.getElementById("countNumber");
+  const caption = document.getElementById("countCaption");
+
+  overlay.classList.remove("hidden");
+
+  let n = 3;
+  showCountdownNumber(number, "3");
+  caption.textContent = "Prépare-toi !";
+
+  const tick = () => {
+    if (n > 1) {
+      n--;
+      showCountdownNumber(number, String(n));
+      setTimeout(tick, 1000);
+    } else {
+      showCountdownNumber(number, "GO !");
+      caption.textContent = "Bonne partie !";
+      setTimeout(beginGame, 850);
+    }
+  };
+
+  setTimeout(tick, 1000);
+}
+
+function showCountdownNumber(element, value) {
+  element.textContent = value;
+  element.style.animation = "none";
+  void element.offsetWidth;
+  element.style.animation = "";
+}
+
+function beginGame() {
+  document.getElementById("countdownOverlay").classList.add("hidden");
+  document.getElementById("gameScreen").classList.remove("hidden");
+
+  const letter = letters[Math.floor(Math.random()*letters.length)];
+  document.getElementById("roundLetter").textContent = letter;
+
+  document.getElementById("answerGrid").innerHTML = categories.map((category,i) => `
+    <div class="answer">
+      <label for="answer${i}">${category}</label>
+      <input id="answer${i}" maxlength="40" placeholder="Un mot en ${letter}…">
+    </div>
+  `).join("");
+
+  timeLeft = roundSeconds;
+  submitted = false;
+  document.getElementById("timer").textContent = timeLeft;
+  document.getElementById("chatLog").innerHTML =
+    '<div class="chat-line"><b>Système :</b> Bonne chance à tous !</div>';
+  renderScores();
+  startTimer();
+}
+
+function startTimer() {
+  stopTimer();
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    document.getElementById("timer").textContent = timeLeft;
+    if (timeLeft <= 0) {
+      stopTimer();
+      submitAnswers(true);
+    }
+  }, 1000);
+}
+
+function stopTimer() {
+  if (timerInterval) {
     clearInterval(timerInterval);
-    document.getElementById("submitBtn").disabled = true;
-    document.getElementById("answerNotice").textContent =
-      "Temps écoulé ! La manche est terminée.";
-    addMessage("", "Fin du temps !", true);
+    timerInterval = null;
+  }
+}
+
+function submitAnswers(fromTimer=false) {
+  if (submitted) return;
+  submitted = true;
+  stopTimer();
+
+  let filled = 0;
+  categories.forEach((category,i) => {
+    const input = document.getElementById("answer" + i);
+    if (input && input.value.trim()) filled++;
+    if (input) input.disabled = true;
+  });
+
+  const points = filled * 10;
+  const player = players.find(p => p.name === currentPlayer);
+  if (player) player.score += points;
+
+  renderScores();
+  toast(fromTimer
+    ? "Temps écoulé ! Tu marques " + points + " points."
+    : "Réponses validées ! +" + points + " points.");
+}
+
+function renderScores() {
+  document.getElementById("scoreList").innerHTML = [...players]
+    .sort((a,b) => b.score-a.score)
+    .map((p,i) => `
+      <div class="score-row">
+        <span>${i===0 ? "🥇" : i===1 ? "🥈" : "🎮"} ${escapeHtml(p.name)}</span>
+        <b>${p.score} pts</b>
+      </div>
+    `).join("");
+}
+
+function sendChat(event) {
+  event.preventDefault();
+  const input = document.getElementById("chatInput");
+  const value = input.value.trim();
+  if (!value) return;
+
+  const line = document.createElement("div");
+  line.className = "chat-line";
+  const name = document.createElement("b");
+  name.textContent = currentPlayer + " : ";
+  line.appendChild(name);
+  line.appendChild(document.createTextNode(value));
+
+  const log = document.getElementById("chatLog");
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
+  input.value = "";
+}
+
+function usePower(type) {
+  const costs = {hint:3, time:5, shield:4};
+  const cost = costs[type];
+
+  if (submitted) {
+    toast("La manche est terminée.");
+    return;
+  }
+  if (coins < cost) {
+    toast("Pas assez de pièces !");
     return;
   }
 
-  seconds--;
+  coins -= cost;
+  document.getElementById("coins").textContent = coins;
+
+  if (type === "time") {
+    timeLeft += 15;
+    document.getElementById("timer").textContent = timeLeft;
+    toast("+15 secondes !");
+  }
+
+  if (type === "shield") {
+    toast("Bouclier activé pour cette manche !");
+  }
+
+  if (type === "hint") {
+    const empty = [...document.querySelectorAll("#answerGrid input")]
+      .find(input => !input.value.trim());
+    if (empty) {
+      empty.focus();
+      toast("Indice : trouve un mot qui commence par " +
+        document.getElementById("roundLetter").textContent + ".");
+    } else {
+      toast("Toutes les catégories sont remplies !");
+    }
+  }
 }
 
-renderGrid();
-renderPlayers();
-renderPowers();
-updateTimer();
+function backToLobby() {
+  stopTimer();
+  document.getElementById("gameScreen").classList.add("hidden");
+  document.getElementById("lobbyScreen").classList.remove("hidden");
+  document.getElementById("startButton").classList.toggle("hidden", !isHost);
+}
 
-const timerInterval = setInterval(() => {
-  if (seconds > 0) updateTimer();
-}, 1000);
+function toast(message) {
+  const el = document.getElementById("toast");
+  el.textContent = message;
+  el.classList.remove("hidden");
+  clearTimeout(window.toastTimer);
+  window.toastTimer = setTimeout(() => el.classList.add("hidden"), 2600);
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, char => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;",
+    '"':"&quot;", "'":"&#39;"
+  })[char]);
+}
 </script>
-
 </body>
 </html>
