@@ -1,258 +1,233 @@
 
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ALPHA BLITZ — Petit Bac</title>
-<script src="/socket.io/socket.io.js"></script>
-<style>
-:root{color-scheme:dark;--bg:#0b1020;--card:#151d32;--line:#293653;--blue:#6485ff;--text:#f4f6ff;--muted:#aab5ce}
-*{box-sizing:border-box}
-body{margin:0;background:radial-gradient(ellipse at top,#202b50,var(--bg) 65%);font-family:system-ui,Arial,sans-serif;color:var(--text);min-height:100vh}
-header{padding:22px 16px;text-align:center;border-bottom:1px solid var(--line)}
-.logo{font-size:clamp(27px,6vw,44px);font-weight:1000;letter-spacing:3px;color:#91a7ff}
-header p{color:var(--muted);margin:5px 0}
-main{max-width:1000px;margin:24px auto;padding:0 14px 40px}
-.panel{background:rgba(21,29,50,.96);border:1px solid var(--line);border-radius:18px;padding:20px;margin-bottom:16px}
-h2{margin:0 0 14px;font-size:21px}
-h3{margin:0 0 10px}
-input,select,button{font:inherit;border-radius:10px;padding:12px;border:1px solid var(--line)}
-input,select{background:#0b1225;color:var(--text);width:100%;min-width:0}
-button{background:var(--blue);color:white;font-weight:750;border:0;cursor:pointer}
-button:disabled{opacity:.4;cursor:not-allowed}
-button.secondary{background:#283653}
-.row{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
-.row>*{flex:1}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-.hidden{display:none!important}
-.muted{color:var(--muted)}
-.notice{padding:12px;border-radius:10px;background:#202c49;margin:12px 0;overflow-wrap:anywhere}
-.error{background:#572b3a;color:#ffdce5}
-.players{display:flex;gap:8px;flex-wrap:wrap}
-.player{background:#222e49;border:1px solid var(--line);padding:9px 12px;border-radius:12px}
-.bigletter{font-size:64px;font-weight:1000;text-align:center;color:#a7b8ff;line-height:1.2}
-.timer{text-align:center;font-size:22px;font-weight:800}
-.category{background:#0c1428;padding:12px;border:1px solid var(--line);border-radius:12px}
-.category label{display:block;font-weight:700;margin-bottom:8px}
-.score{font-size:26px;font-weight:900}
-#chatlog{height:150px;overflow:auto;background:#0b1225;padding:10px;border-radius:10px;margin:10px 0}
-.chatline{margin:5px 0;overflow-wrap:anywhere}
-footer{text-align:center;color:var(--muted);font-size:12px;padding:15px}
-</style>
-</head>
-<body>
-<header>
- <div class="logo">⚡ ALPHA BLITZ</div>
- <p>Le Petit Bac — défie tes amis !</p>
-</header>
-<main>
- <div id="notice" class="notice">Connexion au serveur...</div>
+/* ALPHA BLITZ — décor inspiré de l'image originale */
+:root {
+  --ink: #211b55;
+  --cream: #fff9ed;
+  --pink: #ff9bd0;
+  --yellow: #ffe18a;
+  --blue: #9edcff;
+  --green: #a9f0d2;
+  --purple: #c7b5ff;
+}
 
- <section id="home" class="panel">
-  <h2>🎮 Rejoindre la partie</h2>
-  <label for="name">Ton pseudo</label>
-  <div class="row"><input id="name" maxlength="18" placeholder="Ex. Alex" value=""></div>
-  <div class="grid">
-   <div class="panel">
-    <h3>🚀 Créer une salle</h3>
-    <label for="rounds">Nombre de manches</label>
-    <select id="rounds"><option>3</option><option selected>5</option><option>7</option><option>10</option></select>
-    <label for="duration">Durée d'une manche</label>
-    <select id="duration"><option value="30">30 secondes</option><option value="60">1 minute</option><option value="90">1 min 30</option><option value="120">2 minutes</option><option value="180" selected>3 minutes</option></select>
-    <div class="row"><button id="create">Créer la salle</button></div>
-   </div>
-   <div class="panel">
-    <h3>🔑 Rejoindre une salle</h3>
-    <label for="roomcode">Code de la salle</label>
-    <div class="row"><input id="roomcode" maxlength="6" placeholder="Ex. A1B2C3"></div>
-    <button id="join">Rejoindre</button>
-   </div>
-  </div>
- </section>
+body {
+  background:
+    radial-gradient(ellipse at 10% 15%, #ffd1e8 0, transparent 28%),
+    radial-gradient(ellipse at 90% 25%, #a9a5ff 0, transparent 35%),
+    linear-gradient(135deg, #a99aff, #d7c6ff 50%, #8b83f4);
+  background-attachment: fixed;
+  color: var(--ink);
+}
 
- <section id="roompanel" class="panel hidden">
-  <div class="row" style="align-items:center">
-   <div style="flex:2"><h2>🏠 Salle <span id="code"></span></h2><div class="muted">Partage ce code avec tes amis.</div></div>
-   <button id="copy" class="secondary">Copier le code</button>
-  </div>
-  <h3>Joueurs (<span id="playercount">0</span>/8)</h3>
-  <div id="players" class="players"></div>
-  <div id="lobbyactions" class="row">
-   <button id="ready" class="secondary">Je suis prêt</button>
-   <button id="start" class="hidden">Lancer la partie</button>
-  </div>
-  <div id="roundinfo" class="notice hidden"></div>
- </section>
+/* Petits motifs décoratifs dans le fond */
+body::before {
+  content: "✦     ★       ✧        ★      ✦";
+  position: fixed;
+  inset: 100px 0 auto;
+  height: 100vh;
+  padding: 25px;
+  color: #fff;
+  opacity: .22;
+  font-size: 35px;
+  letter-spacing: 25px;
+  line-height: 3;
+  pointer-events: none;
+  z-index: -1;
+}
 
- <section id="gamepanel" class="panel hidden">
-  <div class="row">
-   <div><div class="muted">Manche</div><div class="score" id="round">1/5</div></div>
-   <div><div class="muted">Tes points</div><div class="score" id="score">0</div></div>
-  </div>
-  <div id="countdown" class="notice hidden"></div>
-  <div id="playarea" class="hidden">
-   <div class="muted" style="text-align:center">LA LETTRE EST</div>
-   <div class="bigletter" id="letter">A</div>
-   <div id="timer" class="timer">--:--</div>
-   <p class="muted">Trouve un mot qui commence par cette lettre pour chaque catégorie.</p>
-   <form id="answersform"><div id="categories" class="grid"></div>
-    <div class="row"><button id="submit" type="submit">Valider mes réponses</button></div>
-   </form>
-   <div id="submitted" class="notice hidden">Réponses envoyées ! Attends les autres joueurs.</div>
-  </div>
-  <div id="results" class="hidden">
-   <h2>📊 Résultats de la manche</h2>
-   <div id="resultlist"></div>
-   <button id="next" class="hidden">Manche suivante</button>
-  </div>
-  <div id="final" class="hidden">
-   <h2>🏆 Partie terminée !</h2>
-   <div id="finalscores"></div>
-   <button id="backhome">Retour à l'accueil</button>
-  </div>
- </section>
+header {
+  background: linear-gradient(110deg, #4031a0, #7654d9, #4c4ac0);
+  border-bottom: 4px solid #fff;
+  box-shadow: 0 5px 0 #39277d;
+}
 
- <section id="chatpanel" class="panel hidden">
-  <h2>💬 Chat de la salle</h2>
-  <div id="chatlog"></div>
-  <form id="chatform" class="row"><input id="chatinput" maxlength="180" placeholder="Écris un message..."><button>Envoyer</button></form>
- </section>
-</main>
-<footer>ALPHA BLITZ · Jeu entre amis</footer>
+.logo {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  text-shadow: 2px 3px 0 #39277d;
+}
 
-<script>
-(() => {
- const $ = id => document.getElementById(id);
- const socket = io();
- let myId = null, room = null, isHost = false, isReady = false;
- let currentCategories = [], endAt = 0, tick = null, lastResults = null;
- const defaultCategories = ["Prénom","Ville ou pays","Animal","Métier","Objet","Aliment","Célébrité","Marque"];
- function showNotice(message, error=false){
-  $("notice").textContent=message;
-  $("notice").classList.toggle("error",error);
-  $("notice").classList.remove("hidden");
- }
- function hide(id){$(id).classList.add("hidden")}
- function show(id){$(id).classList.remove("hidden")}
- function sendCreate(){
-  if(!socket.connected)return showNotice("Connexion au serveur en cours, réessaie dans un instant.",true);
-  socket.emit("room:create",{name:$("name").value.trim()||"Joueur",maxRounds:Number($("rounds").value),duration:Number($("duration").value)});
- }
- function sendJoin(){
-  if(!socket.connected)return showNotice("Connexion au serveur en cours, réessaie dans un instant.",true);
-  socket.emit("room:join",{name:$("name").value.trim()||"Joueur",code:$("roomcode").value.trim().toUpperCase()});
- }
- $("create").onclick=sendCreate;
- $("join").onclick=sendJoin;
- $("roomcode").addEventListener("input",()=>{$("roomcode").value=$("roomcode").value.toUpperCase()});
- $("copy").onclick=async()=>{
-  try{await navigator.clipboard.writeText(room?.code||"");showNotice("Code copié : "+room.code)}
-  catch(e){showNotice("Le code de la salle est : "+(room?.code||""))}
- };
- $("ready").onclick=()=>{isReady=!isReady;socket.emit("player:ready",isReady);$("ready").textContent=isReady?"Annuler prêt":"Je suis prêt"};
- $("start").onclick=()=>socket.emit("game:start");
- $("next").onclick=()=>socket.emit("round:next");
- $("backhome").onclick=()=>location.reload();
- socket.on("connect",()=>showNotice("Connecté au serveur ! Tu peux créer une salle ou en rejoindre une."));
- socket.on("disconnect",()=>showNotice("Connexion perdue. Reconnexion en cours...",true));
- socket.on("connect_error",()=>showNotice("Impossible de joindre le serveur. Actualise la page dans quelques secondes.",true));
- socket.on("app:error",msg=>showNotice(msg,true));
- socket.on("room:joined",data=>{myId=data.playerId;showNotice("Tu as rejoint la salle "+data.code+" !")});
- socket.on("room:update",state=>{
-  room=state;isHost=state.hostId===myId;
-  hide("home");show("roompanel");show("chatpanel");
-  $("code").textContent=state.code;$("playercount").textContent=state.players.length;
-  $("players").innerHTML="";
-  state.players.forEach(p=>{
-   const el=document.createElement("div");el.className="player";
-   el.textContent=(p.host?"👑 ":"")+(p.ready?"✅ ":"⏳ ")+p.name+" — "+p.score+" pts";
-   $("players").appendChild(el);
-  });
-  $("start").classList.toggle("hidden",!isHost||state.status!=="lobby");
-  $("ready").classList.toggle("hidden",isHost||state.status!=="lobby");
-  $("lobbyactions").classList.toggle("hidden",state.status!=="lobby");
-  $("roundinfo").classList.toggle("hidden",state.status==="lobby");
-  $("roundinfo").textContent=state.status==="lobby"?"En attente des joueurs...":state.status==="countdown"?"Préparez-vous !":state.status==="playing"?"Manche en cours !":state.status==="results"?"Manche terminée.":"Partie terminée.";
-  if(state.status!=="lobby")show("gamepanel");
-  $("round").textContent=state.round+"/"+state.maxRounds;
-  const me=state.players.find(p=>p.id===myId);if(me)$("score").textContent=me.score;
-  if(state.status==="countdown"){
-   show("gamepanel");show("countdown");hide("playarea");hide("results");hide("final");
-   $("countdown").textContent="⏳ Prépare-toi pour la manche "+state.round+"...";
+.logo span {
+  background: linear-gradient(120deg, #ff8cc9, #ffe77c);
+  color: #211b55;
+  border: 3px solid white;
+  border-radius: 16px;
+  box-shadow: 0 5px 0 #39277d;
+  transform: rotate(-2deg);
+}
+
+main {
+  max-width: 1450px;
+  margin: 24px auto;
+}
+
+.panel {
+  background: var(--cream);
+  color: var(--ink);
+  border: 3px solid white;
+  border-radius: 24px;
+  box-shadow: 0 7px 0 #6550bd, 0 12px 25px #30216b35;
+}
+
+.panel::after {
+  display: none;
+}
+
+.side {
+  background: linear-gradient(160deg, #5948c4, #342778);
+  color: white;
+  border: 3px solid #fff;
+  border-radius: 22px;
+  box-shadow: 0 7px 0 #30216b;
+}
+
+h1, h2, h3 {
+  color: #30246f;
+  font-weight: 1000;
+}
+
+.sub, .muted {
+  color: #655a92;
+}
+
+.sticker {
+  background: var(--yellow);
+  color: #30246f;
+  border: 2px solid white;
+  border-radius: 12px;
+  box-shadow: 0 3px 0 #bd8b45;
+}
+
+button {
+  background: linear-gradient(180deg, #fff09b, #ffd45f);
+  color: #30246f;
+  border: 2px solid white;
+  border-radius: 14px;
+  box-shadow: 0 4px 0 #bc8b43;
+}
+
+button.pink {
+  background: linear-gradient(135deg, #ff9bd0, #ff70b8);
+}
+
+button.secondary {
+  background: linear-gradient(135deg, #b9e7ff, #d8caff);
+  color: #30246f;
+}
+
+input, select {
+  background: #fff;
+  color: #30246f;
+  border: 2px solid #c9baff;
+  border-radius: 12px;
+}
+
+.wallet, .pill {
+  background: #fff5c9;
+  color: #30246f;
+  border: 2px solid white;
+  border-radius: 14px;
+}
+
+.hero > .panel:first-child {
+  background: linear-gradient(145deg, #fffaf0, #ffe7f3);
+}
+
+.hero > .panel:nth-child(2) {
+  background: linear-gradient(145deg, #d9f4ff, #e8ddff) !important;
+  color: #30246f !important;
+}
+
+.game-layout {
+  gap: 18px;
+}
+
+.category-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.cat {
+  background: #dff3ff;
+  color: #30246f;
+  border: 3px solid #83c9ff;
+  border-radius: 18px;
+  box-shadow: 0 4px 0 #9c9bdc;
+  padding: 14px;
+}
+
+.cat:nth-child(3n + 2) {
+  background: #ffe0f0;
+  border-color: #ff9bcf;
+}
+
+.cat:nth-child(3n) {
+  background: #e3dcff;
+  border-color: #b6a3ff;
+}
+
+.cat:nth-child(4n) {
+  background: #d8f8e9;
+  border-color: #75dfbd;
+}
+
+.chatbox {
+  background: #fff9f1;
+  border: 2px solid #c9baff;
+  border-radius: 16px;
+}
+
+.msg {
+  background: #e7ddff;
+  color: #30246f;
+  border: 2px solid #c2b1ff;
+  border-radius: 15px;
+}
+
+.countdown-overlay {
+  background: linear-gradient(135deg, #6751d5, #d783ff, #ff91c9, #7bdcff);
+  border: 4px solid white;
+  border-radius: 26px;
+  box-shadow: 0 7px 0 #39277d;
+}
+
+.letter {
+  background: #ffe78b;
+  color: #30246f;
+  border: 4px solid white;
+  box-shadow: 0 5px 0 #bc8b43;
+}
+
+.power {
+  background: linear-gradient(145deg, #fff, #f0eaff);
+  border: 3px solid #c5b5ff;
+  border-radius: 18px;
+  color: #30246f;
+}
+
+.notice {
+  background: #d8f8e9;
+  color: #245c4a;
+  border: 2px solid #7bd8b7;
+  border-radius: 14px;
+}
+
+.score-table th {
+  background: #e4dcff;
+}
+
+.footer {
+  color: #fff;
+}
+
+@media (max-width: 900px) {
+  .category-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  if(state.status==="playing"){
-   show("gamepanel");hide("countdown");hide("results");hide("final");show("playarea");
-   $("letter").textContent=state.letter||"?";
-   if(state.categories.join("|")!==currentCategories.join("|")){
-    currentCategories=state.categories.slice();$("categories").innerHTML="";
-    currentCategories.forEach(cat=>{
-     const wrap=document.createElement("div");wrap.className="category";
-     const label=document.createElement("label");label.textContent=cat;label.htmlFor="cat-"+cat;
-     const input=document.createElement("input");input.id="cat-"+cat;input.name=cat;input.maxLength=60;input.autocomplete="off";input.placeholder="Mot en "+state.letter+"...";
-     wrap.append(label,input);$("categories").appendChild(wrap);
-    });
-   }
-   endAt=state.deadline||Date.now()+180000;startTick();
+}
+
+@media (max-width: 480px) {
+  .category-grid {
+    grid-template-columns: 1fr;
   }
-  if(state.status==="results"){show("gamepanel");hide("countdown");hide("playarea");show("results");hide("final");}
-  if(state.status==="finished"){show("gamepanel");hide("countdown");hide("playarea");hide("results");show("final");renderFinal(state.leaderboard||[])}
- });
- function startTick(){
-  if(tick)clearInterval(tick);
-  tick=setInterval(()=>{
-   let left=Math.max(0,Math.ceil((endAt-Date.now())/1000));
-   $("timer").textContent=Math.floor(left/60)+":"+String(left%60).padStart(2,"0");
-   if(left<=0)clearInterval(tick);
-  },250);
- }
- $("answersform").onsubmit=e=>{
-  e.preventDefault();
-  if(!room||room.status!=="playing")return;
-  const answers={};currentCategories.forEach(cat=>answers[cat]=$("cat-"+cat)?.value||"");
-  socket.emit("answers:submit",answers);$("submit").disabled=true;show("submitted");
- };
- socket.on("answers:accepted",data=>showNotice(data.message||"Réponses envoyées !"));
- socket.on("round:results",data=>{
-  lastResults=data;show("results");hide("playarea");hide("countdown");
-  $("resultlist").innerHTML="";
-  (data.results||[]).forEach(player=>{
-   const block=document.createElement("div");block.className="panel";
-   const title=document.createElement("h3");title.textContent=player.name+" — "+player.valid+" réponse(s) valide(s), +"+player.earned+" pièces";
-   block.appendChild(title);
-   (player.rows||[]).forEach(row=>{
-    const line=document.createElement("div");line.className="chatline";
-    line.textContent=(row.valid?"✅ ":"❌ ")+row.category+" : "+(row.word||"—")+" ("+row.points+" pts)";
-    block.appendChild(line);
-   });
-   $("resultlist").appendChild(block);
-  });
-  $("submit").disabled=false;hide("submitted");
-  $("next").classList.toggle("hidden",!isHost);
-  showNotice("Manche terminée ! Consulte les résultats.");
- });
- function renderFinal(scores){
-  $("finalscores").innerHTML="";
-  scores.forEach((p,i)=>{
-   const line=document.createElement("div");line.className="player";line.style.margin="8px 0";
-   line.textContent=(i===0?"🥇 ":i===1?"🥈 ":i===2?"🥉 ": (i+1)+". ")+p.name+" — "+p.score+" pts";
-   $("finalscores").appendChild(line);
-  });
- }
- socket.on("game:finished",state=>renderFinal(state.leaderboard||[]));
- function addChat(data){
-  const line=document.createElement("div");line.className="chatline";
-  line.textContent=(data.system?"📢 ": "")+(data.name?data.name+" : ":"")+(data.text||"");
-  $("chatlog").appendChild(line);$("chatlog").scrollTop=$("chatlog").scrollHeight;
- }
- socket.on("chat:message",addChat);
- $("chatform").onsubmit=e=>{
-  e.preventDefault();const text=$("chatinput").value.trim();
-  if(text){socket.emit("chat:send",text);$("chatinput").value=""}
- };
- socket.on("game:config",config=>{if(config.categories)currentCategories=config.categories.slice()});
- socket.on("game:finished",()=>showNotice("Partie terminée ! Bravo à tous."));
-})();
-</script>
-</body>
-</html>
+}
+
