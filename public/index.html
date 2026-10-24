@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -68,6 +67,7 @@ p {line-height:1.6}
   justify-content:center;align-items:center;gap:8px;
 }
 .btn:hover {transform:translateY(-2px);filter:brightness(1.03)}
+.btn:disabled:hover {transform:none;filter:none}
 .primary {background:linear-gradient(135deg,var(--purple),#9c6bff);color:white;box-shadow:0 7px 16px #7657ff30}
 .pink {background:linear-gradient(135deg,var(--pink),#ff8dba);color:white}
 .green {background:linear-gradient(135deg,#36c993,#77e4b7);color:#123e30}
@@ -148,6 +148,9 @@ p {line-height:1.6}
   color:white;padding:20px;border-radius:20px;text-align:center;
 }
 .theme-display strong {font-size:clamp(24px,5vw,38px)}
+.picked {display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:14px}
+.chip {padding:6px 11px;border-radius:999px;background:#f0edff;color:#5b48bf;font-size:12px;font-weight:850}
+.chip.empty {background:#faf9ff;color:#b6b3cc;border:1px dashed #d9d5ee}
 .answer-grid {display:grid;gap:10px}
 .answer-row {
   display:grid;grid-template-columns:minmax(90px,.8fr) minmax(120px,1.5fr);
@@ -159,10 +162,21 @@ p {line-height:1.6}
 .vote-buttons {display:flex;gap:8px;margin-top:10px}
 .vote-buttons button {flex:1}
 .result-row {display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid #f0edf8}
+.result-block {padding:12px 0;border-bottom:1px solid #f0edf8}
+.result-detail {display:grid;gap:4px;margin-top:8px;font-size:13px}
+.result-detail div {display:flex;justify-content:space-between;gap:10px;color:var(--muted)}
+.result-detail .ok {color:#16966a;font-weight:800}
+.result-detail .ko {color:#b92c59;text-decoration:line-through}
 .coin {color:#b17b00;font-weight:950}
 .shop-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .shop-item {padding:14px;background:#faf9ff;border-radius:16px;text-align:center}
 .shop-item .emoji {font-size:32px}
+.shop-item select {width:100%;margin:6px 0;padding:8px;border-radius:10px;border:2px solid #eeebfa}
+.shop-item .muted {font-size:12px;margin:4px 0}
+.chat-log {max-height:150px;overflow:auto;background:#faf9ff;border-radius:13px;padding:10px;font-size:13px;line-height:1.5}
+.chat-log .sys {color:var(--muted);font-style:italic}
+.chat-form {display:flex;gap:8px;margin-top:10px}
+.chat-form input {flex:1;padding:11px;border:2px solid #eeebfa;border-radius:12px;outline:none}
 .toast {position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#24213d;color:white;padding:13px 18px;border-radius:14px;z-index:99;max-width:90%;display:none}
 .footer {text-align:center;font-size:12px;color:var(--muted);padding:25px}
 @media(max-width:650px) {
@@ -212,7 +226,7 @@ p {line-height:1.6}
       <div class="avatar-grid" id="avatarPicker"></div>
       <div class="grid" style="margin-top:14px">
         <div class="field"><label>COULEUR</label><input id="avatarColor" type="color" value="#8b6cff" style="height:48px;padding:5px"></div>
-        <div class="field"><label>ACCESSOIRE</label><select id="accessory"><option value="none">Aucun</option><option value="crown">Couronne 👑</option><option value="glasses">Lunettes 🕶️</option><option value="hat">Chapeau 🎩</option><option value="star">Étoile ⭐</option></select></div>
+        <div class="field"><label>ACCESSOIRE (à acheter dans la boutique)</label><select id="accessory"><option value="none">Aucun</option><option value="crown" disabled>Couronne 👑 🔒</option><option value="glasses" disabled>Lunettes 🕶️ 🔒</option><option value="hat" disabled>Chapeau 🎩 🔒</option><option value="star" disabled>Étoile ⭐ 🔒</option></select></div>
       </div>
       <div class="stage"><canvas id="preview3d"></canvas></div>
       <p class="muted">Les avatars sont des modèles 3D procéduraux. Tu peux les remplacer par tes propres modèles GLB plus tard.</p>
@@ -234,6 +248,11 @@ p {line-height:1.6}
       </div>
       <p class="muted" id="lobbyStatus">En attente des joueurs…</p>
     </div>
+    <div class="panel">
+      <h2>💬 Discussion</h2>
+      <div class="chat-log" id="chatLog"></div>
+      <div class="chat-form"><input id="chatInput" maxlength="180" placeholder="Écris un message…" autocomplete="off"><button class="btn light" id="chatSend">Envoyer</button></div>
+    </div>
   </section>
 
   <!-- COMPTE À REBOURS -->
@@ -249,12 +268,13 @@ p {line-height:1.6}
   <!-- ROULETTE -->
   <section class="view" id="rouletteView">
     <div class="panel" style="text-align:center">
-      <div class="badge">🎡 LA GRANDE ROULETTE</div>
+      <div class="badge">🎡 LA GRANDE ROULETTE · <span id="rouletteCount">0 / 8</span></div>
       <h1>Quel sera le thème ?</h1>
       <p class="muted">Un joueur arrête la roue. Le thème obtenu est commun à tous.</p>
       <div class="wheel-wrap"><div class="pointer">▼</div><div id="wheel" class="wheel"></div></div>
       <div class="theme-display"><div>THÈME SÉLECTIONNÉ</div><strong id="selectedTheme">À déterminer…</strong></div>
-      <button id="stopWheel" class="btn pink" style="margin-top:18px">ARRÊTER LA ROUE ✋</button>
+      <div class="picked" id="pickedThemes"></div>
+      <button id="stopWheel" class="btn pink" style="margin-top:18px" disabled>ARRÊTER LA ROUE ✋</button>
       <p id="wheelStatus" class="muted">En attente du lancement de la roulette…</p>
     </div>
   </section>
@@ -262,7 +282,7 @@ p {line-height:1.6}
   <!-- JEU -->
   <section class="view" id="gameView">
     <div class="row"><div><span class="badge">MANCHE <span id="roundNumber">1</span></span><h1>À toi de jouer !</h1></div><div class="pill">⏱️ <span id="timer">60</span>s</div></div>
-    <div class="theme-display"><div>LA LETTRE</div><strong id="roundLetter">?</strong><div style="margin-top:8px">Thème : <b id="gameTheme">En attente</b></div></div>
+    <div class="theme-display"><div>LA LETTRE</div><strong id="roundLetter">?</strong><div style="margin-top:8px">Thèmes : <b id="gameTheme">En attente</b></div></div>
     <div class="panel"><h2>✍️ Tes réponses</h2><div id="answerGrid" class="answer-grid"></div>
       <div class="actions" style="margin-top:16px"><button class="btn primary" id="submitAnswers">Envoyer mes réponses 🚀</button></div>
       <p class="muted" id="answerStatus">Une réponse par catégorie. Les joueurs voteront ensuite pour décider si elle est valide.</p>
@@ -279,19 +299,31 @@ p {line-height:1.6}
       <div id="voteAnswers"></div>
       <p id="voteStatus" class="status">En attente des réponses à évaluer…</p>
       <button class="btn primary full" id="nextVotePlayer">Joueur suivant →</button>
+      <p class="muted" id="voteHostHint" style="display:none">L'hôte fait avancer le vote (passage automatique après quelques secondes).</p>
     </div>
   </section>
 
   <!-- RÉSULTATS -->
   <section class="view" id="resultsView">
     <div class="hero"><div class="badge">🏆 FIN DE MANCHE</div><h1>Les résultats !</h1><p>Voici le classement actualisé.</p></div>
-    <div class="panel"><div id="roundResults"></div><button class="btn primary full" id="nextRound" style="margin-top:15px">Manche suivante →</button></div>
+    <div class="panel"><div id="roundResults"></div><button class="btn primary full" id="nextRound" style="margin-top:15px">Manche suivante →</button><p class="muted" id="resultsHostHint" style="display:none;text-align:center">En attente de l'hôte…</p></div>
   </section>
 
   <!-- BOUTIQUE -->
   <section class="view" id="shopView">
     <div class="row"><h1>La boutique 🛍️</h1><button class="btn light" id="backFromShop">Retour</button></div>
-    <div class="panel"><p>Gagne des pièces en jouant et débloque de nouveaux accessoires.</p><div class="shop-grid" id="shopGrid"></div></div>
+    <div class="panel">
+      <div class="row"><p style="margin:0">Gagne des pièces en jouant et débloque de nouveaux accessoires.</p><span class="pill">🪙 <span id="shopCoins">0</span></span></div>
+      <h2>🎩 Accessoires</h2>
+      <div class="shop-grid" id="shopGrid"></div>
+    </div>
+    <div class="panel">
+      <h2>⚡ Pouvoirs</h2>
+      <p class="muted">Deux pouvoirs maximum dans ton inventaire.</p>
+      <div class="shop-grid" id="powerGrid"></div>
+      <h2>🎒 Mon inventaire</h2>
+      <div class="shop-grid" id="inventoryGrid"></div>
+    </div>
   </section>
 
   <!-- FIN -->
@@ -333,7 +365,16 @@ const MONSTERS = [
  {id:"arc-en-boum",name:"Arc-en-boum",emoji:"🌈",shape:"blob",color:"#ff83bb"}
 ];
 
-const THEMES = CATEGORIES;
+// Boutique cosmétique : les prix affichés viennent du serveur (game:config) ; ceci est le repli.
+const COSMETIC_EMOJIS = {crown:"👑",glasses:"🕶️",hat:"🎩",star:"⭐"};
+let shopItems = [
+ {id:"crown",name:"Couronne",price:50},
+ {id:"glasses",name:"Lunettes",price:35},
+ {id:"hat",name:"Chapeau",price:40},
+ {id:"star",name:"Étoile",price:25}
+];
+const POWER_EMOJIS = {friend:"📞",double:"✨",time:"⏱️",spy:"🕵️",shield:"🛡️",change:"🔄",mystery:"🎲"};
+
 let selectedMonster = MONSTERS[0];
 let customColor = selectedMonster.color;
 let accessory = "none";
@@ -343,20 +384,38 @@ let myName = "";
 let isHost = false;
 let isReady = false;
 let currentRoom = null;
-let gameConfig = {categories:CATEGORIES,powers:[]};
+let gameConfig = {categories:CATEGORIES,powers:[],cosmetics:[]};
 let currentRound = 1;
+let maxRounds = 5;
 let roundDuration = 60;
-let remaining = 60;
+let deadline = 0;
+let clockOffset = 0;
 let timerInterval = null;
 let countdownInterval = null;
-let wheelSpinning = false;
-let chosenTheme = "";
-let currentVoteIndex = 0;
+let currentVoteIndex = -1;
+let currentVoteTarget = "";
 let votesSubmitted = new Set();
 let answersSubmitted = false;
 let rendererRecords = new Map();
-let coins = Number(localStorage.getItem("ab_coins") || 0);
-let ownedItems = JSON.parse(localStorage.getItem("ab_owned") || '["none"]');
+let currentView = "home";
+let hasJoined = false;
+
+// Pièces, cosmétiques et inventaire : toujours lus depuis le serveur (jamais modifiés ici).
+let coins = 0;
+let ownedItems = [];
+let myInventory = [];
+let myShield = false;
+const buyPending = new Set();
+
+// Roulette
+let wheelAngle = 0;
+let wheelRAF = 0;
+let wheelIdle = false;
+let cycleTimer = null;
+let landTimer = null;
+let rouletteSpinId = 0;
+let lastResultSpinId = 0;
+let stopRequested = false;
 
 $("coinCount").textContent = coins;
 
@@ -364,9 +423,20 @@ function toast(msg) {
  const el=$("toast");el.textContent=msg;el.style.display="block";
  clearTimeout(toast.timeout);toast.timeout=setTimeout(()=>el.style.display="none",2600);
 }
+function viewForStatus(status) {
+ return ({lobby:"lobby",countdown:"countdownView",roulette:"rouletteView",playing:"gameView",voting:"voteView",results:"resultsView",finished:"finishedView"})[status]||"home";
+}
 function showView(id) {
+ if(currentView==="home"&&id!=="home"){
+  // On libère les scènes 3D de l'accueil (12 monstres + aperçu) pour économiser les contextes WebGL.
+  disposeIn($("avatarPicker"),true);
+  const rec=rendererRecords.get($("preview3d"));if(rec)disposeRecord(rec,false);
+ }
  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
  $(id).classList.add("active");
+ const wasHome=currentView==="home";
+ currentView=id;
+ if(id==="home"&&!wasHome){renderAvatarPicker();refreshPreview()}
 }
 function emit(event,payload={}) {
  if(!socket){toast("Connexion au serveur indisponible.");return}
@@ -376,20 +446,44 @@ function safeText(value) {return String(value ?? "");}
 function escapeHTML(value) {
  return safeText(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
-function addCoins(amount) {
- coins=Math.max(0,coins+amount);
- localStorage.setItem("ab_coins",String(coins));
+function setCoins(value) {
+ coins=Math.max(0,Number(value)||0);
  $("coinCount").textContent=coins;
+ $("shopCoins").textContent=coins;
 }
 function currentAvatar() {
  return {monsterId:selectedMonster.id,color:customColor,accessory};
 }
 function findMonster(id) {return MONSTERS.find(m=>m.id===id)||MONSTERS[0]}
 
+/* ---------- 3D : création et libération propre des scènes ---------- */
+
+function disposeRecord(rec,release=false) {
+ if(!rec||rec.disposed)return;
+ rec.disposed=true;
+ cancelAnimationFrame(rec.raf);
+ rec.observer?.disconnect();
+ rec.scene?.traverse(o=>{
+  if(o.geometry)o.geometry.dispose();
+  const m=o.material;
+  if(m)(Array.isArray(m)?m:[m]).forEach(x=>x.dispose());
+ });
+ rec.renderer.dispose();
+ // forceContextLoss rend le canvas inutilisable : réservé aux canvas qui vont disparaître.
+ if(release)rec.renderer.forceContextLoss?.();
+ if(rendererRecords.get(rec.canvas)===rec)rendererRecords.delete(rec.canvas);
+}
+function disposeIn(container,release=true) {
+ if(!container)return;
+ container.querySelectorAll("canvas").forEach(c=>{
+  const rec=rendererRecords.get(c);if(rec)disposeRecord(rec,release);
+ });
+}
+
 function createMonsterScene(canvas,avatar={},small=false) {
  if(!canvas)return null;
  const old=rendererRecords.get(canvas);
- if(old){old.renderer.dispose();rendererRecords.delete(canvas)}
+ if(old)disposeRecord(old,false);
  let renderer,scene,camera,root;
  try {
   renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
@@ -467,7 +561,7 @@ function createMonsterScene(canvas,avatar={},small=false) {
     horn.position.set(x,.72,.05);horn.rotation.z=x<0?.35:-.35;root.add(horn);
    }
   }
-  const acc=avatar.accessory||accessory;
+  const acc=avatar.accessory||"none";
   if(acc==="crown"){
    const gold=new THREE.MeshStandardMaterial({color:0xffcf56,metalness:.65,roughness:.25});
    const base=new THREE.Mesh(new THREE.CylinderGeometry(.36,.42,.12,24),gold);
@@ -489,24 +583,31 @@ function createMonsterScene(canvas,avatar={},small=false) {
    star.position.set(.65,.75,.2);root.add(star);
   }
   root.position.y=-.04;
-  rendererRecords.set(canvas,{renderer,scene,camera,root});
+  const rec={canvas,renderer,scene,camera,root,raf:0,observer:null,disposed:false};
+  rendererRecords.set(canvas,rec);
   const resize=()=>{
-   const w=canvas.clientWidth||220,h=canvas.clientHeight||180;
+   const w=canvas.clientWidth,h=canvas.clientHeight;
+   if(!w||!h)return;
    renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
   };
-  const observer=new ResizeObserver(resize);observer.observe(canvas);
-  let start=performance.now();
+  rec.observer=new ResizeObserver(resize);rec.observer.observe(canvas);
+  const start=performance.now();
   const animate=now=>{
-   if(!canvas.isConnected){observer.disconnect();renderer.dispose();rendererRecords.delete(canvas);return}
-   const t=(now-start)/1000;
-   root.rotation.y=Math.sin(t*.65)*.16;
-   root.position.y=-.04+Math.sin(t*2)*.045;
-   root.scale.setScalar(1+Math.sin(t*2)*.012);
-   renderer.render(scene,camera);
-   requestAnimationFrame(animate);
+   if(rec.disposed)return;
+   // Canvas retiré de la page : on arrête la boucle et on libère le contexte WebGL.
+   if(!canvas.isConnected){disposeRecord(rec,true);return}
+   // Vue masquée : on ne dessine pas, mais la boucle reste légère.
+   if(canvas.offsetParent!==null){
+    const t=(now-start)/1000;
+    root.rotation.y=Math.sin(t*.65)*.16;
+    root.position.y=-.04+Math.sin(t*2)*.045;
+    root.scale.setScalar(1+Math.sin(t*2)*.012);
+    renderer.render(scene,camera);
+   }
+   rec.raf=requestAnimationFrame(animate);
   };
-  requestAnimationFrame(animate);
-  return {renderer,scene,camera,root};
+  rec.raf=requestAnimationFrame(animate);
+  return rec;
  } catch(e) {
   const ctx=canvas.getContext("2d");
   if(ctx){ctx.clearRect(0,0,canvas.width,canvas.height);ctx.font="70px sans-serif";ctx.textAlign="center";ctx.fillText(findMonster(avatar.monsterId).emoji,canvas.width/2,canvas.height/2)}
@@ -515,6 +616,7 @@ function createMonsterScene(canvas,avatar={},small=false) {
 }
 
 function renderAvatarPicker() {
+ disposeIn($("avatarPicker"),true);
  $("avatarPicker").innerHTML="";
  MONSTERS.forEach(m=>{
   const btn=document.createElement("button");
@@ -535,19 +637,40 @@ function refreshPreview() {
 $("avatarColor").addEventListener("input",e=>{customColor=e.target.value;refreshPreview();emit("avatar:update",{avatar:currentAvatar()})});
 $("accessory").addEventListener("change",e=>{accessory=e.target.value;refreshPreview();emit("avatar:update",{avatar:currentAvatar()})});
 
-function renderPlayers(players=[]) {
+// Seuls les accessoires achetés (côté serveur) peuvent être sélectionnés.
+function refreshAccessorySelect() {
+ const select=$("accessory");
+ select.innerHTML="";
+ const opt=(value,label,disabled)=>{const o=document.createElement("option");o.value=value;o.textContent=label;o.disabled=!!disabled;select.appendChild(o)};
+ opt("none","Aucun",false);
+ shopItems.forEach(item=>{
+  const owned=ownedItems.includes(item.id);
+  opt(item.id,`${item.name} ${COSMETIC_EMOJIS[item.id]||""}${owned?"":" 🔒"}`,!owned);
+ });
+ select.value=(accessory==="none"||ownedItems.includes(accessory))?accessory:"none";
+}
+
+let playersSig="";
+function renderPlayers(players=[],force=false) {
+ const sig=JSON.stringify(players.map(p=>[p.id,p.name,p.ready,p.avatar]));
+ if(!force&&sig===playersSig)return;
+ playersSig=sig;
+ disposeIn($("playersList"),true);
  $("playersList").innerHTML="";
  $("playerCount").textContent=players.length+" joueur"+(players.length>1?"s":"");
  players.forEach(p=>{
   const item=document.createElement("div");item.className="player";
   const canvas=document.createElement("canvas");canvas.width=100;canvas.height=100;
   const info=document.createElement("div");info.className="player-info";
-  info.innerHTML=`<div class="player-name">${escapeHTML(p.name||p.player_name||"Joueur")}</div><div class="player-state">${p.ready?"✅ Prêt":"⏳ En attente"}</div>`;
+  info.innerHTML=`<div class="player-name">${escapeHTML(p.name||p.player_name||"Joueur")}${p.id===playerId?" (toi)":""}${p.host?" 👑":""}</div><div class="player-state">${p.ready?"✅ Prêt":"⏳ En attente"}</div>`;
   item.append(canvas,info);
   $("playersList").appendChild(item);
   createMonsterScene(canvas,p.avatar||{},true);
  });
 }
+
+/* ---------- Compte à rebours (le serveur lance ensuite la roulette) ---------- */
+
 function showCountdown() {
  showView("countdownView");
  let n=3;$("countdownNumber").textContent=n;
@@ -555,33 +678,71 @@ function showCountdown() {
  countdownInterval=setInterval(()=>{
   n--;
   if(n>0){$("countdownNumber").textContent=n}
-  else{clearInterval(countdownInterval);showView("rouletteView");emit("roulette:start",{code:roomCode})}
+  else{clearInterval(countdownInterval);$("countdownNumber").textContent="GO !"}
  },1000);
 }
-function startWheel(theme) {
- if(wheelSpinning)return;
- wheelSpinning=true;
- $("stopWheel").disabled=true;
- $("wheelStatus").textContent="La roue tourne…";
+
+/* ---------- Roulette : animation locale, résultat décidé par le serveur ---------- */
+
+function randomOf(list) {return list[Math.floor(Math.random()*list.length)]}
+function stopIdleSpin() {
+ wheelIdle=false;cancelAnimationFrame(wheelRAF);
+ clearInterval(cycleTimer);cycleTimer=null;
+}
+function startIdleSpin(themes) {
+ stopIdleSpin();
  const wheel=$("wheel");
- const extra=1440+Math.random()*1080;
- wheel.style.transform=`rotate(${extra}deg)`;
- setTimeout(()=>{
-  chosenTheme=theme||THEMES[Math.floor(Math.random()*THEMES.length)];
-  $("selectedTheme").textContent=chosenTheme;
-  $("wheelStatus").textContent="Thème choisi !";
-  wheelSpinning=false;
-  $("stopWheel").disabled=false;
-  // Le serveur doit envoyer le thème final à tous les joueurs.
-  emit("roulette:stop",{code:roomCode,theme:chosenTheme});
- },4100);
+ wheel.style.transition="none";
+ wheelIdle=true;
+ let last=performance.now();
+ const step=now=>{
+  if(!wheelIdle)return;
+  wheelAngle+=(now-last)*0.5;last=now;
+  wheel.style.transform=`rotate(${wheelAngle}deg)`;
+  wheelRAF=requestAnimationFrame(step);
+ };
+ wheelRAF=requestAnimationFrame(step);
+ const pool=themes&&themes.length?themes:CATEGORIES;
+ cycleTimer=setInterval(()=>{$("selectedTheme").textContent=randomOf(pool)},110);
+}
+// Fait atterrir la roue sur le segment du thème validé par le serveur.
+function landWheel(theme,done) {
+ stopIdleSpin();
+ const wheel=$("wheel");
+ const idx=Math.max(0,CATEGORIES.indexOf(theme));
+ const center=(idx%30)*12+6;
+ const current=((wheelAngle%360)+360)%360;
+ const delta=(((360-center-current)%360)+360)%360;
+ wheelAngle+=720+delta;
+ wheel.style.transition="transform 2.2s cubic-bezier(.12,.72,.08,1)";
+ void wheel.offsetWidth;
+ wheel.style.transform=`rotate(${wheelAngle}deg)`;
+ clearTimeout(landTimer);
+ landTimer=setTimeout(()=>{
+  $("selectedTheme").textContent=theme;
+  if(done)done();
+ },2300);
+}
+function renderPicked(selected=[],total=8) {
+ const box=$("pickedThemes");box.innerHTML="";
+ for(let i=0;i<total;i++){
+  const chip=document.createElement("span");
+  chip.className="chip"+(selected[i]?"":" empty");
+  chip.textContent=selected[i]||`#${i+1}`;
+  box.appendChild(chip);
+ }
+ $("rouletteCount").textContent=`${selected.length} / ${total}`;
 }
 $("stopWheel").addEventListener("click",()=>{
- if(wheelSpinning)return;
- emit("roulette:stop-request",{code:roomCode});
- // Le résultat officiel doit venir du serveur ; cette animation est un aperçu local.
- startWheel();
+ // Une seule demande par roulette ; le serveur vérifie qu'on est bien le joueur désigné.
+ if(stopRequested)return;
+ stopRequested=true;
+ $("stopWheel").disabled=true;
+ emit("roulette:stop-request",{code:roomCode,spinId:rouletteSpinId});
 });
+
+/* ---------- Réponses ---------- */
+
 function buildAnswerGrid(categories) {
  $("answerGrid").innerHTML="";
  categories.forEach((category,i)=>{
@@ -599,73 +760,82 @@ function submitAnswers() {
  answersSubmitted=true;
  $("submitAnswers").disabled=true;
  $("answerStatus").textContent="Réponses envoyées. Attends la phase de vote.";
- emit("answers:submit",{code:roomCode,answers,letter:$("roundLetter").textContent});
+ emit("answers:submit",{code:roomCode,answers});
 }
 $("submitAnswers").addEventListener("click",submitAnswers);
 
-function startLocalTimer(seconds) {
- clearInterval(timerInterval);remaining=seconds;$("timer").textContent=remaining;
- timerInterval=setInterval(()=>{
-  remaining--;$("timer").textContent=remaining;
-  if(remaining<=0){clearInterval(timerInterval);submitAnswers()}
- },1000);
+// Le minuteur suit l'échéance du serveur (elle peut être prolongée par le pouvoir « Temps bonus »).
+function startLocalTimer() {
+ clearInterval(timerInterval);
+ const tick=()=>{
+  const left=Math.max(0,Math.ceil((deadline-(Date.now()+clockOffset))/1000));
+  $("timer").textContent=left;
+  if(left<=0){clearInterval(timerInterval);submitAnswers()}
+ };
+ tick();
+ timerInterval=setInterval(tick,250);
 }
+function setServerClock(now) {
+ if(Number.isFinite(now))clockOffset=now-Date.now();
+}
+
+/* ---------- Votes ---------- */
+
 function renderVotePlayer(player) {
+ currentVoteTarget=player.id||player.player_id||"";
  $("votePlayerName").textContent="Réponses de "+(player.name||player.player_name||"Joueur");
- const canvas=$("voteMonster");
- createMonsterScene(canvas,player.avatar||{});
+ createMonsterScene($("voteMonster"),player.avatar||{});
+ const mine=currentVoteTarget===playerId;
  const answers=player.answers||{};
  $("voteAnswers").innerHTML="";
+ $("voteStatus").textContent=mine?"Ce sont tes réponses : les autres joueurs votent.":"Valide ou refuse chaque réponse.";
  Object.entries(answers).forEach(([category,answer])=>{
-  const row=document.createElement("div");row.className="vote-card";
-  const key=(player.id||player.player_id)+":"+category;
-  const value=typeof answer==="object"?(answer.value||""):answer;
-  row.innerHTML=`<div class="muted">${escapeHTML(category)}</div><strong>${escapeHTML(value||"(aucune réponse)")}</strong><div class="vote-buttons"><button class="btn green" data-vote="accept">✓ Valider</button><button class="btn danger" data-vote="reject">✗ Refuser</button></div><div class="status" data-vote-status></div>`;
-  const buttons=row.querySelectorAll("button");
-  buttons.forEach(btn=>btn.addEventListener("click",()=>{
-   if(player.id===playerId||player.player_id===playerId){toast("Tu ne peux pas voter pour tes propres réponses.");return}
+  const row=document.createElement("div");row.className="vote-card";row.dataset.category=category;
+  const key=currentVoteTarget+":"+category;
+  const value=String(typeof answer==="object"&&answer?(answer.value||""):(answer||""));
+  const canVote=!mine&&value.trim()!=="";
+  row.innerHTML=`<div class="muted">${escapeHTML(category)}</div><strong>${escapeHTML(value||"(aucune réponse)")}</strong>${canVote?`<div class="vote-buttons"><button class="btn green" data-vote="accept">✓ Valider</button><button class="btn danger" data-vote="reject">✗ Refuser</button></div>`:""}<div class="status" data-vote-status></div>`;
+  const target=currentVoteTarget;
+  row.querySelectorAll("button").forEach(btn=>btn.addEventListener("click",()=>{
    if(votesSubmitted.has(key)){toast("Tu as déjà voté pour cette réponse.");return}
-   votesSubmitted.add(key);buttons.forEach(b=>b.disabled=true);
+   votesSubmitted.add(key);
+   row.querySelectorAll("button").forEach(b=>b.disabled=true);
    row.querySelector("[data-vote-status]").textContent="Vote envoyé au serveur…";
-   emit("answer:vote",{code:roomCode,targetPlayerId:player.id||player.player_id,category,decision:btn.dataset.vote});
+   emit("answer:vote",{code:roomCode,targetPlayerId:target,category,decision:btn.dataset.vote});
   }));
   $("voteAnswers").appendChild(row);
  });
 }
-$("nextVotePlayer").addEventListener("click",()=>emit("vote:next-player",{code:roomCode}));
+function showVoteStep(player,index,total) {
+ currentVoteIndex=index;
+ renderVotePlayer(player);
+ $("voteProgress").textContent=`${index+1} / ${total||"?"}`;
+ const next=$("nextVotePlayer");
+ next.disabled=true;setTimeout(()=>{next.disabled=false},700);
+}
+$("nextVotePlayer").addEventListener("click",()=>{
+ if(!isHost)return;
+ $("nextVotePlayer").disabled=true;
+ emit("vote:next-player",{code:roomCode,index:currentVoteIndex});
+});
+
+/* ---------- Résultats et classement ---------- */
 
 function renderResults(data={}) {
- const list=data.players||data.results||[];
+ const list=(data.results||data.players||[]).slice().sort((a,b)=>(b.score||0)-(a.score||0));
  $("roundResults").innerHTML="";
- list.slice().sort((a,b)=>(b.score||0)-(a.score||0)).forEach((p,i)=>{
-  const row=document.createElement("div");row.className="result-row";
-  row.innerHTML=`<span>${["🥇","🥈","🥉"][i]||"🎮"} ${escapeHTML(p.name||p.player_name||"Joueur")}</span><strong>${Number(p.score||0)} pts</strong>`;
-  $("roundResults").appendChild(row);
- });
-}
-const shopItems=[
- {id:"crown",name:"Couronne",emoji:"👑",price:50},
- {id:"glasses",name:"Lunettes",emoji:"🕶️",price:35},
- {id:"hat",name:"Chapeau",emoji:"🎩",price:40},
- {id:"star",name:"Étoile",emoji:"⭐",price:25}
-];
-function renderShop() {
- $("shopGrid").innerHTML="";
- shopItems.forEach(item=>{
-  const owned=ownedItems.includes(item.id);
-  const div=document.createElement("div");div.className="shop-item";
-  div.innerHTML=`<div class="emoji">${item.emoji}</div><strong>${item.name}</strong><p class="coin">${item.price} 🪙</p><button class="btn ${owned?"light":"primary"} full">${owned?"Débloqué": "Acheter"}</button>`;
-  div.querySelector("button").addEventListener("click",()=>{
-   if(ownedItems.includes(item.id)){toast("Tu possèdes déjà cet objet.");return}
-   if(coins<item.price){toast("Pas assez de pièces !");return}
-   emit("shop:buy",{itemId:item.id});
-   toast("Demande d'achat envoyée au serveur.");
-  });
-  $("shopGrid").appendChild(div);
+ list.forEach((p,i)=>{
+  const block=document.createElement("div");block.className="result-block";
+  const rows=Array.isArray(p.rows)?p.rows:[];
+  const roundPts=rows.reduce((s,r)=>s+(r.points||0),0);
+  const detail=rows.filter(r=>r.word).map(r=>`<div><span>${escapeHTML(r.category)} : <span class="${r.valid?"ok":"ko"}">${escapeHTML(r.word)}</span></span><span>${r.valid?`+${r.points} pts · +${r.coins} 🪙`:`${r.votesFor}✓ ${r.votesAgainst}✗`}</span></div>`).join("");
+  block.innerHTML=`<div class="row"><span>${["🥇","🥈","🥉"][i]||"🎮"} <b>${escapeHTML(p.name||p.player_name||"Joueur")}</b></span><strong>${Number(p.score||0)} pts</strong></div>`+
+   (rows.length?`<div class="muted" style="font-size:13px">+${roundPts} pts cette manche · <span class="coin">+${Number(p.earned||0)} 🪙</span> (dont ${Number(p.bonus||0)} de bonus)</div><div class="result-detail">${detail}</div>`:"");
+  $("roundResults").appendChild(block);
  });
 }
 function renderFinal(data={}) {
- const list=(data.players||data.results||[]).slice().sort((a,b)=>(b.score||0)-(a.score||0));
+ const list=(data.players||data.leaderboard||data.results||[]).slice().sort((a,b)=>(b.score||0)-(a.score||0));
  $("finalRanking").innerHTML="";
  list.forEach((p,i)=>{
   const row=document.createElement("div");row.className="result-row";
@@ -674,6 +844,120 @@ function renderFinal(data={}) {
  });
  if(list[0])createMonsterScene($("winnerMonster"),list[0].avatar||{});
 }
+
+/* ---------- Boutique (tout est validé par le serveur) ---------- */
+
+function buyItem(id) {
+ if(!hasJoined){toast("Rejoins un salon pour acheter.");return}
+ if(buyPending.has(id))return;
+ buyPending.add(id);
+ emit("shop:buy",{itemId:id});
+ renderShop();
+ // Filet de sécurité si le serveur ne répond pas.
+ setTimeout(()=>{if(buyPending.delete(id))renderShop()},3000);
+}
+function renderShop() {
+ $("shopCoins").textContent=coins;
+ // Accessoires
+ $("shopGrid").innerHTML="";
+ shopItems.forEach(item=>{
+  const owned=ownedItems.includes(item.id);
+  const equipped=accessory===item.id;
+  const div=document.createElement("div");div.className="shop-item";
+  const label=owned?(equipped?"Retirer":"Équiper"):"Acheter";
+  div.innerHTML=`<div class="emoji">${COSMETIC_EMOJIS[item.id]||"🎁"}</div><strong>${escapeHTML(item.name)}</strong><p class="coin">${item.price} 🪙</p><button class="btn ${owned?"light":"primary"} full">${label}</button>`;
+  const btn=div.querySelector("button");
+  btn.disabled=buyPending.has(item.id);
+  btn.addEventListener("click",()=>{
+   if(owned){
+    emit("avatar:update",{avatar:{...currentAvatar(),accessory:equipped?"none":item.id}});
+    return;
+   }
+   if(coins<item.price){toast("Pas assez de pièces !");return}
+   buyItem(item.id);
+  });
+  $("shopGrid").appendChild(div);
+ });
+ // Pouvoirs
+ $("powerGrid").innerHTML="";
+ (gameConfig.powers||[]).forEach(power=>{
+  const div=document.createElement("div");div.className="shop-item";
+  const unavailable=power.available===false;
+  div.innerHTML=`<div class="emoji">${POWER_EMOJIS[power.id]||"⚡"}</div><strong>${escapeHTML(String(power.name||power.id).replace(/^\S+\s/,""))}</strong><p class="coin">${power.price} 🪙</p><button class="btn primary full">${unavailable?"Bientôt":"Acheter"}</button>`;
+  const btn=div.querySelector("button");
+  btn.disabled=unavailable||buyPending.has(power.id);
+  btn.addEventListener("click",()=>{
+   if(coins<power.price){toast("Pas assez de pièces !");return}
+   buyItem(power.id);
+  });
+  $("powerGrid").appendChild(div);
+ });
+ // Inventaire
+ $("inventoryGrid").innerHTML="";
+ const extras=[];
+ if(myShield)extras.push({id:"shield",active:true});
+ const all=[...myInventory.map(id=>({id})),...extras];
+ if(!all.length){$("inventoryGrid").innerHTML='<p class="muted">Aucun pouvoir pour le moment.</p>'}
+ all.forEach(entry=>{
+  const power=(gameConfig.powers||[]).find(p=>p.id===entry.id)||{id:entry.id,name:entry.id};
+  const div=document.createElement("div");div.className="shop-item";
+  div.innerHTML=`<div class="emoji">${POWER_EMOJIS[entry.id]||"⚡"}</div><strong>${escapeHTML(String(power.name).replace(/^\S+\s/,""))}</strong>`;
+  if(entry.active){
+   div.insertAdjacentHTML("beforeend",'<p class="muted">Actif</p>');
+  } else {
+   let select=null;
+   if(entry.id==="friend"){
+    select=document.createElement("select");
+    (currentRoom?.players||[]).filter(p=>p.id!==playerId).forEach(p=>{
+     const o=document.createElement("option");o.value=p.id;o.textContent=p.name;select.appendChild(o);
+    });
+    div.appendChild(select);
+   }
+   const btn=document.createElement("button");btn.className="btn yellow full";btn.textContent="Utiliser";
+   btn.addEventListener("click",()=>{
+    btn.disabled=true;setTimeout(()=>{btn.disabled=false},600);
+    emit("power:use",{powerId:entry.id,targetId:select?select.value:undefined});
+   });
+   div.appendChild(btn);
+  }
+  $("inventoryGrid").appendChild(div);
+ });
+}
+
+/* ---------- Interface hôte ---------- */
+
+function updateHostUI() {
+ $("startBtn").style.display=isHost?"inline-flex":"none";
+ $("nextVotePlayer").style.display=isHost?"inline-flex":"none";
+ $("voteHostHint").style.display=isHost?"none":"block";
+ $("nextRound").style.display=isHost?"inline-flex":"none";
+ $("resultsHostHint").style.display=isHost?"none":"block";
+ $("nextRound").textContent=currentRound>=maxRounds?"Voir le podium 🏆":"Manche suivante →";
+}
+
+function resetLocalRound() {
+ clearInterval(timerInterval);clearInterval(countdownInterval);
+ stopIdleSpin();clearTimeout(landTimer);
+ answersSubmitted=false;votesSubmitted.clear();
+ currentVoteIndex=-1;currentVoteTarget="";
+ rouletteSpinId=0;lastResultSpinId=0;stopRequested=false;
+}
+
+// Corrige l'écran si l'état du salon ne correspond pas (arrivée en cours de route, retour au salon).
+function syncViewFromRoom(room) {
+ if(currentView==="home"||currentView==="shopView")return;
+ if(room.status==="lobby"&&currentView!=="lobby"){
+  resetLocalRound();
+  isReady=false;$("readyBtn").textContent="Je suis prêt ✓";
+  showView("lobby");renderPlayers(room.players||[],true);
+ } else if(room.status==="results"&&currentView==="lobby"){
+  renderResults({results:room.lastResults||[]});showView("resultsView");
+ } else if(room.status==="finished"&&currentView==="lobby"){
+  renderFinal(room);showView("finishedView");
+ }
+}
+
+/* ---------- Actions de l'accueil et du salon ---------- */
 
 $("createBtn").addEventListener("click",()=>{
  myName=$("createName").value.trim();
@@ -696,92 +980,204 @@ $("leaveBtn").addEventListener("click",()=>{location.reload()});
 $("copyCode").addEventListener("click",async()=>{
  try{await navigator.clipboard.writeText(roomCode);toast("Code copié !")}catch{toast("Code du salon : "+roomCode)}
 });
-$("nextRound").addEventListener("click",()=>emit("round:next",{code:roomCode}));
-$("backFromShop").addEventListener("click",()=>showView("home"));
+$("nextRound").addEventListener("click",()=>{
+ if(!isHost)return;
+ $("nextRound").disabled=true;setTimeout(()=>{$("nextRound").disabled=false},800);
+ emit("round:next",{code:roomCode});
+});
+$("backFromShop").addEventListener("click",()=>{
+ showView(currentRoom?viewForStatus(currentRoom.status):"home");
+});
 $("homeBtn").addEventListener("click",()=>location.reload());
 
+function sendChat() {
+ const text=$("chatInput").value.trim();
+ if(!text)return;
+ emit("chat:send",{text});
+ $("chatInput").value="";
+}
+$("chatSend").addEventListener("click",sendChat);
+$("chatInput").addEventListener("keydown",e=>{if(e.key==="Enter")sendChat()});
+function addChat(data) {
+ const log=$("chatLog");
+ const line=document.createElement("div");
+ if(data.system)line.className="sys";
+ line.textContent=data.system?String(data.text||""):`${data.name||"Joueur"} : ${data.text||""}`;
+ log.appendChild(line);
+ while(log.children.length>50)log.removeChild(log.firstChild);
+ log.scrollTop=log.scrollHeight;
+}
+
+/* ---------- Événements Socket.IO ---------- */
+
 if(socket) {
- socket.on("connect",()=>toast("Connecté au serveur !"));
+ let firstConnect=true;
+ socket.on("connect",()=>{
+  if(firstConnect){firstConnect=false;toast("Connecté au serveur !");return}
+  // Après une coupure, le serveur a retiré ce joueur du salon : on repart proprement.
+  if(hasJoined){toast("Connexion perdue : retour à l'accueil.");setTimeout(()=>location.reload(),1500)}
+ });
  socket.on("disconnect",()=>toast("Connexion perdue. Reconnexion en cours…"));
  socket.on("game:config",config=>{
   gameConfig=config||gameConfig;
-  if(config.categories?.length)CATEGORIES.splice(0,CATEGORIES.length,...config.categories);
-  buildAnswerGrid(CATEGORIES);renderAvatarPicker();refreshPreview();
+  if(config?.categories?.length)CATEGORIES.splice(0,CATEGORIES.length,...config.categories);
+  if(config?.cosmetics?.length)shopItems=config.cosmetics;
+  if(currentView==="home"){renderAvatarPicker();refreshPreview()}
+  refreshAccessorySelect();renderShop();
  });
  socket.on("room:joined",data=>{
+  hasJoined=true;
   roomCode=data.code;playerId=data.playerId||"";
   isHost=!!data.isHost;
   $("lobbyCode").textContent=roomCode;
-  $("startBtn").style.display=isHost?"inline-flex":"none";
+  resetLocalRound();
+  isReady=false;$("readyBtn").textContent="Je suis prêt ✓";
+  $("chatLog").innerHTML="";
+  updateHostUI();
   showView("lobby");toast("Salon rejoint !");
  });
  socket.on("room:update",room=>{
   currentRoom=room;
+  setServerClock(room.now);
   if(room.code){roomCode=room.code;$("lobbyCode").textContent=room.code}
+  currentRound=room.round||currentRound;
+  maxRounds=room.maxRounds||maxRounds;
   const players=room.players||[];
-  renderPlayers(players);
-  const me=players.find(p=>p.id===playerId||p.playerId===playerId||p.player_id===playerId);
-  if(me?.avatar){selectedMonster=findMonster(me.avatar.monsterId);customColor=me.avatar.color||selectedMonster.color;accessory=me.avatar.accessory||"none"}
-  if(room.status==="playing"&&$("lobby").classList.contains("active")) {
-   currentRound=room.round||1;roundDuration=room.duration||60;
-   $("roundNumber").textContent=currentRound;showView("gameView");
+  isHost=room.hostId===playerId;
+  const me=players.find(p=>p.id===playerId);
+  if(me){
+   setCoins(me.coins);
+   ownedItems=Array.isArray(me.cosmetics)?me.cosmetics:[];
+   myInventory=Array.isArray(me.inventory)?me.inventory:[];
+   myShield=!!me.shield;
+   if(me.avatar){
+    selectedMonster=findMonster(me.avatar.monsterId);
+    customColor=me.avatar.color||selectedMonster.color;
+    accessory=me.avatar.accessory||"none";
+    if(currentView==="home")refreshPreview();
+   }
+   isReady=!!me.ready;
+   if(room.status==="lobby")$("readyBtn").textContent=isReady?"Je ne suis plus prêt":"Je suis prêt ✓";
+   refreshAccessorySelect();
   }
+  updateHostUI();
+  if(currentView==="lobby"){
+   renderPlayers(players);
+   const ready=players.filter(p=>p.ready).length;
+   $("lobbyStatus").textContent=players.length<2?"Il faut au moins deux joueurs pour commencer.":`${ready}/${players.length} joueurs prêts.`;
+  }
+  if(currentView==="shopView")renderShop();
+  // Le chrono suit l'échéance du serveur (pouvoir « Temps bonus »).
+  if(room.status==="playing"&&room.deadline&&room.deadline!==deadline){
+   deadline=room.deadline;
+   if(!answersSubmitted&&currentView==="gameView")startLocalTimer();
+  }
+  syncViewFromRoom(room);
  });
- socket.on("game:started",data=>{currentRound=data.round||1;showCountdown()});
- socket.on("roulette:start",()=>{showView("rouletteView");startWheel()});
+ socket.on("game:started",data=>{
+  resetLocalRound();
+  currentRound=data.round||1;maxRounds=data.maxRounds||maxRounds;
+  $("selectedTheme").textContent="À déterminer…";
+  renderPicked([],8);
+  updateHostUI();
+  showCountdown();
+ });
+ socket.on("roulette:start",data=>{
+  // Ignore un événement reçu en double pour la même roulette.
+  if(data.spinId&&data.spinId===rouletteSpinId)return;
+  rouletteSpinId=data.spinId||rouletteSpinId+1;
+  clearInterval(countdownInterval);
+  clearTimeout(landTimer);
+  stopRequested=false;
+  showView("rouletteView");
+  renderPicked(data.selectedThemes||[],data.total||8);
+  const mine=data.spinnerId===playerId;
+  $("stopWheel").disabled=!mine;
+  $("stopWheel").textContent=mine?"ARRÊTER LA ROUE ✋":"En attente de "+(data.spinnerName||"…");
+  $("wheelStatus").textContent=mine?`C'est à toi d'arrêter la roue (${data.index}/${data.total}) ! Sinon elle s'arrêtera toute seule.`:`${data.spinnerName||"Un joueur"} doit arrêter la roue (${data.index}/${data.total}).`;
+  startIdleSpin(data.themes);
+ });
  socket.on("roulette:result",data=>{
-  chosenTheme=data.theme||"Animal";$("selectedTheme").textContent=chosenTheme;
-  $("gameTheme").textContent=chosenTheme;showView("gameView");
+  // Le thème vient uniquement du serveur ; un résultat en double est ignoré.
+  if(data.spinId&&data.spinId===lastResultSpinId)return;
+  lastResultSpinId=data.spinId||lastResultSpinId+1;
+  showView("rouletteView");
+  $("stopWheel").disabled=true;
+  $("wheelStatus").textContent=data.automatic?"Temps écoulé : thème choisi automatiquement…":"La roue s'arrête…";
+  landWheel(data.theme,()=>{
+   $("wheelStatus").textContent=`Thème ${data.index}/${data.total} validé !`;
+   renderPicked(data.selectedThemes||[],data.total||8);
+  });
  });
  socket.on("game:round",data=>{
+  clearInterval(countdownInterval);stopIdleSpin();clearTimeout(landTimer);
+  setServerClock(data.now);
   currentRound=data.round||currentRound;
+  maxRounds=data.maxRounds||maxRounds;
   roundDuration=data.duration||roundDuration;
+  deadline=data.deadline||(Date.now()+clockOffset+roundDuration*1000);
+  const categories=data.categories||CATEGORIES;
   $("roundNumber").textContent=currentRound;
   $("roundLetter").textContent=data.letter||"?";
-  $("gameTheme").textContent=data.theme||chosenTheme||"À déterminer";
-  buildAnswerGrid(data.categories||CATEGORIES);
+  $("gameTheme").textContent=`${categories.length} thèmes tirés à la roulette`;
+  buildAnswerGrid(categories);
   answersSubmitted=false;$("submitAnswers").disabled=false;
   $("answerStatus").textContent="Écris tes réponses avant la fin du temps.";
-  showView("gameView");startLocalTimer(roundDuration);
+  showView("gameView");startLocalTimer();
  });
  socket.on("answers:accepted",()=>{answersSubmitted=true;$("submitAnswers").disabled=true;$("answerStatus").textContent="Réponses reçues ! Attends le vote."});
  socket.on("vote:start",data=>{
-  clearInterval(timerInterval);votesSubmitted.clear();currentVoteIndex=0;
+  clearInterval(timerInterval);votesSubmitted.clear();
   const players=data.players||[];
-  window.__votePlayers=players;
-  if(players.length){renderVotePlayer(players[0]);$("voteProgress").textContent=`1 / ${players.length}`}
+  const first=data.player||players[0];
   showView("voteView");
+  if(first)showVoteStep(first,data.index||0,data.total||players.length);
+  updateHostUI();
  });
  socket.on("vote:player",data=>{
-  if(data.player)renderVotePlayer(data.player);
-  if(data.index!==undefined)$("voteProgress").textContent=`${data.index+1} / ${data.total||"?"}`;
+  if(!data.player)return;
+  // Ignore un événement en double pour le même joueur.
+  if(data.index===currentVoteIndex&&data.player.id===currentVoteTarget)return;
+  showView("voteView");
+  showVoteStep(data.player,data.index??0,data.total);
  });
  socket.on("vote:update",data=>{
-  $("voteStatus").textContent=`Votes : ${data.accept||0} pour, ${data.reject||0} contre.`;
+  if(data.targetPlayerId!==currentVoteTarget)return;
+  const row=[...$("voteAnswers").children].find(r=>r.dataset.category===data.category);
+  const text=`Votes : ${data.accept||0} pour, ${data.reject||0} contre.`;
+  if(row)row.querySelector("[data-vote-status]").textContent=text;
+  $("voteStatus").textContent=text;
  });
- socket.on("vote:finished",data=>{
-  $("voteStatus").textContent="Vote terminé. Décision : "+(data.accepted?"réponse validée":"réponse refusée");
+ socket.on("round:results",data=>{
+  clearInterval(timerInterval);
+  currentRound=data.round||currentRound;
+  maxRounds=data.maxRounds||maxRounds;
+  renderResults(data);updateHostUI();showView("resultsView");
  });
- socket.on("round:results",data=>{renderResults(data);showView("resultsView");addCoins(10)});
- socket.on("game:finished",data=>{renderFinal(data);showView("finishedView");addCoins(20)});
+ socket.on("game:finished",data=>{renderFinal(data);showView("finishedView")});
  socket.on("shop:bought",data=>{
-  if(data.itemId&&!ownedItems.includes(data.itemId))ownedItems.push(data.itemId);
-  if(data.coins!==undefined)coins=data.coins;
-  else {const item=shopItems.find(i=>i.id===data.itemId);if(item)coins=Math.max(0,coins-item.price)}
-  localStorage.setItem("ab_owned",JSON.stringify(ownedItems));
-  localStorage.setItem("ab_coins",String(coins));$("coinCount").textContent=coins;
-  renderShop();toast("Objet débloqué !");
+  buyPending.clear();
+  if(data.coins!==undefined)setCoins(data.coins);
+  renderShop();toast(data.message||"Achat effectué !");
  });
- socket.on("chat:message",data=>console.log("Message salon",data));
- socket.on("app:error",data=>toast(data.message||"Une erreur est survenue."));
+ socket.on("power:friend-request",data=>toast(`📞 ${data.from} fait appel à toi !`));
+ socket.on("power:spy-result",data=>toast("🕵️ "+(data.message||"")));
+ socket.on("chat:private",data=>toast(`✉️ ${data.from} : ${data.text}`));
+ socket.on("chat:private:notice",msg=>toast(String(msg)));
+ socket.on("chat:message",addChat);
+ socket.on("app:error",data=>{
+  if(buyPending.size){buyPending.clear();renderShop()}
+  toast(data.message||"Une erreur est survenue.");
+ });
 }
 
 renderAvatarPicker();
 refreshPreview();
-buildAnswerGrid(CATEGORIES);
+refreshAccessorySelect();
+renderPicked([],8);
 renderShop();
 
-// Accès rapide à la boutique avec un double-clic sur les pièces.
+// Accès rapide à la boutique en cliquant sur les pièces.
 $("coinCount").parentElement.style.cursor="pointer";
 $("coinCount").parentElement.title="Ouvrir la boutique";
 $("coinCount").parentElement.addEventListener("click",()=>{renderShop();showView("shopView")});
