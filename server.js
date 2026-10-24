@@ -43,8 +43,22 @@ function emitRoom(room) { io.to(room.code).emit("room:update", roomState(room));
 function system(room, message) { io.to(room.code).emit("chat:message", { name: "Le jeu", text: message, system: true, at: Date.now() }); }
 function sendError(socket, message) { socket.emit("app:error", message); }
 function findPlayer(room, socket) { return room?.players.get(socket.id); }
-function stopTimer(room) { if (room.timer) clearTimeout(room.timer); room.timer = null; }
+function stopTimer(room) {
+  if (room.timer) clearTimeout(room.timer);
+  if (room.countdownTimer) clearTimeout(room.countdownTimer);
+  room.timer = null;
+  room.countdownTimer = null;
+}
 function chooseLetter() { return LETTERS[Math.floor(Math.random() * LETTERS.length)]; }
+function startCountdown(room) {
+  stopTimer(room);
+  room.status = "countdown";
+  room.letter = null;
+  room.deadline = Date.now() + 4000;
+  emitRoom(room);
+  system(room, `Préparez-vous : manche ${room.round} dans 3 secondes !`);
+  room.countdownTimer = setTimeout(() => startRound(room), 4000);
+}
 function startRound(room) {
   stopTimer(room);
   room.status = "playing";
@@ -115,8 +129,8 @@ io.on("connection", socket => {
     const room = {
       code: roomCode, hostId: socket.id, players: new Map([[socket.id, player]]), status: "lobby",
       round: 1, maxRounds: Math.max(1, Math.min(10, Number(maxRounds) || 5)),
-      duration: Math.max(30, Math.min(180, Number(duration) || 90)),
-      categories: [...CATEGORIES], letter: null, deadline: null, submissions: new Map(), timer: null, lastResults: []
+      duration: Math.max(30, Math.min(180, Number(duration) || 180)),
+      categories: [...CATEGORIES], letter: null, deadline: null, submissions: new Map(), timer: null, countdownTimer: null, lastResults: []
     };
     rooms.set(roomCode, room); socket.join(roomCode); socket.data.roomCode = roomCode;
     socket.emit("room:joined", { code: roomCode, playerId: socket.id });
@@ -145,7 +159,7 @@ io.on("connection", socket => {
     if (room.status !== "lobby") return;
     room.round = 1;
     for (const pl of room.players.values()) { pl.score = 0; pl.ready = true; pl.inventory = []; pl.activePowers = []; }
-    startRound(room);
+    startCountdown(room);
   });
   socket.on("answers:submit", answers => {
     const room = rooms.get(socket.data.roomCode); const p = findPlayer(room, socket);
@@ -235,7 +249,7 @@ io.on("connection", socket => {
     if (room.round >= room.maxRounds) {
       room.status = "finished"; emitRoom(room); io.to(room.code).emit("game:finished", roomState(room)); return;
     }
-    room.round++; startRound(room);
+    room.round++; startCountdown(room);
   });
   socket.on("disconnect", () => leaveRoom(socket));
 });
