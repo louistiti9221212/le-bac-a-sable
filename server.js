@@ -122,19 +122,24 @@ function leaveRoom(socket) {
 io.on("connection", socket => {
   socket.emit("game:config", { categories: CATEGORIES, powers: POWERS });
   socket.on("room:create", ({ name, maxRounds, duration } = {}) => {
-    leaveRoom(socket);
-    let roomCode;
-    do { roomCode = code(); } while (rooms.has(roomCode));
-    const player = { id: socket.id, name: cleanName(name), score: 0, coins: 50, ready: true, host: true, inventory: [], activePowers: [], shield: false, submitted: false };
-    const room = {
-      code: roomCode, hostId: socket.id, players: new Map([[socket.id, player]]), status: "lobby",
-      round: 1, maxRounds: Math.max(1, Math.min(10, Number(maxRounds) || 5)),
-      duration: Math.max(30, Math.min(180, Number(duration) || 180)),
-      categories: [...CATEGORIES], letter: null, deadline: null, submissions: new Map(), timer: null, countdownTimer: null, lastResults: []
-    };
-    rooms.set(roomCode, room); socket.join(roomCode); socket.data.roomCode = roomCode;
-    socket.emit("room:joined", { code: roomCode, playerId: socket.id });
-    emitRoom(room); system(room, `${player.name} a créé la salle.`);
+    try {
+      leaveRoom(socket);
+      let roomCode;
+      do { roomCode = code(); } while (rooms.has(roomCode));
+      const player = { id: socket.id, name: cleanName(name), score: 0, coins: 50, ready: true, host: true, inventory: [], activePowers: [], shield: false, submitted: false };
+      const room = {
+        code: roomCode, hostId: socket.id, players: new Map([[socket.id, player]]), status: "lobby",
+        round: 1, maxRounds: Math.max(1, Math.min(10, Number(maxRounds) || 5)),
+        duration: Math.max(30, Math.min(180, Number(duration) || 180)),
+        categories: [...CATEGORIES], letter: null, deadline: null, submissions: new Map(), timer: null, countdownTimer: null, lastResults: []
+      };
+      rooms.set(roomCode, room); socket.join(roomCode); socket.data.roomCode = roomCode;
+      socket.emit("room:joined", { code: roomCode, playerId: socket.id });
+      emitRoom(room); system(room, `${player.name} a créé la salle.`);
+    } catch (error) {
+      console.error("Erreur lors de la création de salle :", error);
+      sendError(socket, "Le serveur n'a pas réussi à créer la salle. Consulte les journaux Render.");
+    }
   });
   socket.on("room:join", ({ name, code: inputCode } = {}) => {
     leaveRoom(socket);
