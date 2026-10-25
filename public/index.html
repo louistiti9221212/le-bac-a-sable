@@ -65,6 +65,7 @@ p{line-height:1.5}
 }
 .hud-center{display:flex;align-items:center;justify-content:center;gap:22px;visibility:hidden}
 body[data-view="gameView"] .hud-center,body[data-view="voteView"] .hud-center{visibility:visible}
+body[data-view="voteView"] .timer-pill{display:none}
 .letter-box{
   background:linear-gradient(#3a2ba4,#241a6e);border:3px solid #150e45;border-radius:26px;
   padding:6px 26px 12px;text-align:center;box-shadow:0 5px 0 #150e45,0 12px 20px #1a105a40;transform:rotate(-2deg);
@@ -270,6 +271,23 @@ input:focus,select:focus{border-color:var(--violet)}
 .shop-item .muted{font-size:13px;margin:4px 0}
 
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#150e45;color:#fff;padding:13px 20px;border-radius:16px;z-index:2000;max-width:90%;display:none;font-weight:800;border:2px solid #ffd35c}
+
+/* ---------- Notifications de messages ---------- */
+.chat-notif-stack{position:fixed;top:16px;right:16px;z-index:2500;display:flex;flex-direction:column;gap:10px;max-width:min(340px,calc(100vw - 32px))}
+.chat-notif{
+  display:flex;align-items:center;gap:10px;background:linear-gradient(#5a46e0,#3a2bb0);border:3px solid #150e45;border-radius:18px;
+  padding:10px 14px;color:#fff;box-shadow:0 5px 0 #150e45,0 14px 24px #150e4580;cursor:pointer;
+  animation:notifIn .3s ease;text-align:left;
+}
+.chat-notif.hide{animation:notifOut .3s ease forwards}
+@keyframes notifIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:none}}
+@keyframes notifOut{to{opacity:0;transform:translateX(40px)}}
+.chat-notif .n-av{width:42px;height:42px;border-radius:50%;background:linear-gradient(#bfe6ff,#ffd7ec);border:3px solid #fff;display:grid;place-items:center;font-size:22px;flex:none}
+.chat-notif .n-body{flex:1;min-width:0}
+.chat-notif .n-name{font:800 15px var(--display);display:flex;align-items:center;gap:6px}
+.chat-notif .n-name .n-tag{font-size:10px;background:#ffd35c;color:#4a2d73;border-radius:999px;padding:1px 7px}
+.chat-notif .n-text{font-size:13px;font-weight:700;color:#e6e1ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-notif .n-close{background:none;color:#fff;font-size:16px;padding:0 2px;flex:none}
 
 /* ---------- Bureau décoratif (bas de l'image) ---------- */
 .desk{
@@ -520,7 +538,7 @@ input:focus,select:focus{border-color:var(--violet)}
       <div id="voteAnswers"></div>
       <p id="voteStatus" class="status">En attente des réponses à évaluer…</p>
       <button class="btn primary full" id="nextVotePlayer">Joueur suivant →</button>
-      <p class="muted" id="voteHostHint" style="display:none">L'hôte fait avancer le vote (passage automatique après quelques secondes).</p>
+      <p class="muted" id="voteHostHint" style="display:none">On passe au joueur suivant uniquement quand tous les joueurs ont validé toutes les réponses.</p>
     </div>
   </section>
 
@@ -608,6 +626,7 @@ input:focus,select:focus{border-color:var(--violet)}
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="chat-notif-stack" id="chatNotifStack" aria-live="polite"></div>
 
 <!-- Téléphone : liste des discussions (groupe + privés) puis conversation -->
 <div class="phone floating" id="phone" aria-label="Téléphone de discussion">
@@ -661,6 +680,64 @@ const CAT_EXAMPLES = {
  "Célébrité":"Messi","Véhicule":"Vélo","Matière scolaire":"Maths","Matériau":"Bois","Partie du corps":"Main","Émotion":"Joie"
 };
 // Couleurs des cartes (fond, bordure) dans l'ordre de l'image
+/* ---- 75 THÈMES SUPPLÉMENTAIRES (roue de thèmes) ---- */
+const EXTRA_THEMES=[
+ "Métier de santé","Métier du bâtiment","Sport d'équipe","Sport individuel","Sport d'hiver",
+ "Danse","Genre de musique","Chanson","Groupe de musique","Dessin animé",
+ "Bande dessinée","Super-héros","Méchant de film","Film d'animation","Acteur",
+ "Chanteur","Influenceur","Journal","Émission de télé","Jeu de société",
+ "Jeu de cartes","Jouet","Dessert","Gâteau","Bonbon",
+ "Fromage","Épice","Herbe aromatique","Céréale","Fast-food",
+ "Arbre fruitier","Baie","Fruit sec","Boisson chaude","Cocktail",
+ "Plat italien","Plat asiatique","Spécialité française","Pays d'Afrique","Pays d'Asie",
+ "Pays d'Europe","Ville française","Monument","Fleuve","Montagne",
+ "Mer ou océan","Île","Langue","Monnaie","Personnalité politique",
+ "Personnage historique","Invention","Découverte scientifique","Planète","Constellation",
+ "Phénomène météo","Catastrophe naturelle","Dinosaure","Oiseau","Insecte",
+ "Poisson","Arbre","Meuble","Appareil électroménager","Outil",
+ "Ustensile de cuisine","Vêtement d'hiver","Chaussure","Bijou","Cosmétique",
+ "Coiffure","Émotion négative","Qualité","Défaut","Verbe d'action",
+ "Adjectif","Onomatopée","Mot rigolo","Animal sauvage","Animal domestique"
+];
+const EXTRA_ICONS={
+ "Métier de santé":"🩺","Métier du bâtiment":"👷","Sport d'équipe":"🤾","Sport individuel":"🎾","Sport d'hiver":"⛸️",
+ "Danse":"💃","Genre de musique":"🎵","Chanson":"🎤","Groupe de musique":"🎸","Dessin animé":"🎨",
+ "Bande dessinée":"📖","Super-héros":"🦸","Méchant de film":"😈","Film d'animation":"🎬","Acteur":"🎭",
+ "Chanteur":"🎙️","Influenceur":"📱","Journal":"📰","Émission de télé":"📺","Jeu de société":"🎲",
+ "Jeu de cartes":"🃏","Jouet":"🧸","Dessert":"🍰","Gâteau":"🎂","Bonbon":"🍬",
+ "Fromage":"🧀","Épice":"🌶️","Herbe aromatique":"🌿","Céréale":"🌾","Fast-food":"🍔",
+ "Arbre fruitier":"🍒","Baie":"🫐","Fruit sec":"🥜","Boisson chaude":"☕","Cocktail":"🍹",
+ "Plat italien":"🍝","Plat asiatique":"🍜","Spécialité française":"🥘","Pays d'Afrique":"🌍","Pays d'Asie":"🏯",
+ "Pays d'Europe":"🇪🇺","Ville française":"🗼","Monument":"🗽","Fleuve":"🏞️","Montagne":"🏔️",
+ "Mer ou océan":"🌊","Île":"🏝️","Langue":"🗣️","Monnaie":"💰","Personnalité politique":"🏛️",
+ "Personnage historique":"📜","Invention":"💡","Découverte scientifique":"🔬","Planète":"🪐","Constellation":"✨",
+ "Phénomène météo":"⛈️","Catastrophe naturelle":"🌪️","Dinosaure":"🦖","Oiseau":"🐦","Insecte":"🐝",
+ "Poisson":"🐟","Arbre":"🌳","Meuble":"🛋️","Appareil électroménager":"🔌","Outil":"🔧",
+ "Ustensile de cuisine":"🍳","Vêtement d'hiver":"🧣","Chaussure":"👟","Bijou":"💍","Cosmétique":"💄",
+ "Coiffure":"💇","Émotion négative":"😢","Qualité":"😇","Défaut":"😈","Verbe d'action":"🏃",
+ "Adjectif":"📝","Onomatopée":"💥","Mot rigolo":"🤪","Animal sauvage":"🦁","Animal domestique":"🐶"
+};
+const EXTRA_EXAMPLES={
+ "Métier de santé":"Médecin","Métier du bâtiment":"Maçon","Sport d'équipe":"Football","Sport individuel":"Judo","Sport d'hiver":"Ski",
+ "Danse":"Salsa","Genre de musique":"Rock","Chanson":"Happy","Groupe de musique":"Queen","Dessin animé":"Pokemon",
+ "Bande dessinée":"Tintin","Super-héros":"Batman","Méchant de film":"Darth Vader","Film d'animation":"Shrek","Acteur":"Dujardin",
+ "Chanteur":"Stromae","Influenceur":"MrBeast","Journal":"Le Monde","Émission de télé":"Koh-Lanta","Jeu de société":"Monopoly",
+ "Jeu de cartes":"Uno","Jouet":"Yo-yo","Dessert":"Tiramisu","Gâteau":"Fondant","Bonbon":"Carambar",
+ "Fromage":"Comté","Épice":"Curry","Herbe aromatique":"Basilic","Céréale":"Riz","Fast-food":"Pizza",
+ "Arbre fruitier":"Pommier","Baie":"Fraise","Fruit sec":"Noisette","Boisson chaude":"Chocolat chaud","Cocktail":"Mojito",
+ "Plat italien":"Lasagne","Plat asiatique":"Nouilles","Spécialité française":"Cassoulet","Pays d'Afrique":"Sénégal","Pays d'Asie":"Thaïlande",
+ "Pays d'Europe":"Espagne","Ville française":"Lyon","Monument":"Tour Eiffel","Fleuve":"Loire","Montagne":"Everest",
+ "Mer ou océan":"Atlantique","Île":"Corse","Langue":"Espagnol","Monnaie":"Euro","Personnalité politique":"Maire",
+ "Personnage historique":"Napoléon","Invention":"Téléphone","Découverte scientifique":"Pénicilline","Planète":"Mars","Constellation":"Orion",
+ "Phénomène météo":"Orage","Catastrophe naturelle":"Tremblement de terre","Dinosaure":"T-Rex","Oiseau":"Aigle","Insecte":"Papillon",
+ "Poisson":"Requin","Arbre":"Chêne","Meuble":"Canapé","Appareil électroménager":"Micro-ondes","Outil":"Marteau",
+ "Ustensile de cuisine":"Spatule","Vêtement d'hiver":"Écharpe","Chaussure":"Basket","Bijou":"Collier","Cosmétique":"Rouge à lèvres",
+ "Coiffure":"Chignon","Émotion négative":"Peur","Qualité":"Générosité","Défaut":"Jalousie","Verbe d'action":"Courir",
+ "Adjectif":"Magnifique","Onomatopée":"Boum","Mot rigolo":"Girafon","Animal sauvage":"Tigre","Animal domestique":"Chat"
+};
+Object.assign(CAT_ICONS,EXTRA_ICONS);
+Object.assign(CAT_EXAMPLES,EXTRA_EXAMPLES);
+const ALL_WHEEL_THEMES=[...new Set([...CATEGORIES,...EXTRA_THEMES])];
 const CARD_COLORS = [
  ["#cfe8ff","#6cb7ff"],["#ffd3e6","#ff8bbd"],["#dcd6ff","#8f84e8"],
  ["#cdf5e0","#5fd6a2"],["#fff0b8","#f2c14e"],["#ffc9d9","#ff86a8"],
@@ -1086,14 +1163,14 @@ function startIdleSpin(themes){
   wheelRAF=requestAnimationFrame(step);
  };
  wheelRAF=requestAnimationFrame(step);
- const pool=themes&&themes.length?themes:CATEGORIES;
+ const pool=themes&&themes.length?[...new Set([...themes,...EXTRA_THEMES])]:ALL_WHEEL_THEMES;
  $("selectedTheme").textContent="La roue tourne…";
  cycleTimer=setInterval(()=>{$("selectedTheme").textContent=randomOf(pool)},110);
 }
 function landWheel(theme,done){
  stopIdleSpin();
  const wheel=$("wheel");
- const idx=Math.max(0,CATEGORIES.indexOf(theme));
+ const idx=Math.max(0,ALL_WHEEL_THEMES.indexOf(theme));
  const center=(idx%30)*12+6;
  const current=((wheelAngle%360)+360)%360;
  const delta=(((360-center-current)%360)+360)%360;
@@ -1169,19 +1246,51 @@ function startLocalTimer(){
 function setServerClock(now){if(Number.isFinite(now))clockOffset=now-Date.now()}
 
 /* ---------- Votes ---------- */
+let voteCounts={}; // catégorie -> {accept,reject}
+let voteCategories=[];
+function votersNeeded(){
+ // Tous les autres joueurs que celui dont on évalue les réponses
+ const n=(currentRoom?.players||[]).filter(p=>p.id!==currentVoteTarget).length;
+ return Math.max(1,n);
+}
+function allVotesIn(){
+ const need=votersNeeded();
+ return voteCategories.length>0&&voteCategories.every(c=>{
+  const v=voteCounts[c]||{};
+  return ((v.accept||0)+(v.reject||0))>=need;
+ });
+}
+function updateVoteContinueUI(){
+ const next=$("nextVotePlayer");
+ const need=votersNeeded();
+ const done=voteCategories.filter(c=>{const v=voteCounts[c]||{};return ((v.accept||0)+(v.reject||0))>=need}).length;
+ const complete=allVotesIn();
+ if(!next)return;
+ if(complete){
+  next.disabled=false;
+  next.textContent=isHost?"Tous ont validé ! Joueur suivant →":"Tous les joueurs ont validé ✓";
+  $("voteStatus").textContent="✅ Tous les joueurs ont validé les réponses !";
+ }else{
+  next.disabled=true;
+  next.textContent=`⏳ En attente des validations (${done}/${voteCategories.length} catégories)`;
+  if(!mine(currentVoteTarget))$("voteStatus").textContent=`Valide ou refuse chaque réponse. ${done}/${voteCategories.length} catégories validées par tous.`;
+ }
+}
+function mine(id){return id===playerId}
 function renderVotePlayer(player){
  currentVoteTarget=player.id||"";
  $("votePlayerName").textContent="Réponses de "+(player.name||"Joueur");
  createMonsterScene($("voteMonster"),player.avatar||{});
- const mine=currentVoteTarget===playerId;
+ const isMine=mine(currentVoteTarget);
  const answers=player.answers||{};
  $("voteAnswers").innerHTML="";
- $("voteStatus").textContent=mine?"Ce sont tes réponses : les autres joueurs votent.":"Valide ou refuse chaque réponse.";
+ $("voteStatus").textContent=isMine?"Ce sont tes réponses : les autres joueurs votent.":"Valide ou refuse chaque réponse. On continue quand tous les joueurs ont voté.";
+ voteCounts={};voteCategories=Object.keys(answers);
  Object.entries(answers).forEach(([category,answer])=>{
   const row=document.createElement("div");row.className="vote-card";row.dataset.category=category;
   const key=currentVoteTarget+":"+category;
   const value=String(typeof answer==="object"&&answer?(answer.value||""):(answer||""));
-  const canVote=!mine&&value.trim()!=="";
+  const canVote=!isMine&&value.trim()!=="";
   row.innerHTML=`<div class="muted" style="font-weight:800">${CAT_ICONS[category]||""} ${escapeHTML(category)}</div><strong style="font-size:20px">${escapeHTML(value||"(aucune réponse)")}</strong>${canVote?`<div class="vote-buttons"><button class="btn green" data-vote="accept">✓ Valider</button><button class="btn danger" data-vote="reject">✗ Refuser</button></div>`:""}<div class="status" data-vote-status></div>`;
   const target=currentVoteTarget;
   row.querySelectorAll("button").forEach(btn=>btn.addEventListener("click",()=>{
@@ -1193,18 +1302,31 @@ function renderVotePlayer(player){
   }));
   $("voteAnswers").appendChild(row);
  });
+ updateVoteContinueUI();
 }
 function showVoteStep(player,index,total){
  currentVoteIndex=index;
  renderVotePlayer(player);
  $("voteProgress").textContent=`${index+1} / ${total||"?"}`;
- const next=$("nextVotePlayer");next.disabled=true;setTimeout(()=>{next.disabled=false},700);
+ updateVoteContinueUI();
 }
 $("nextVotePlayer").addEventListener("click",()=>{
  if(!isHost)return;
+ if(!allVotesIn()){toast("⏳ Attends que tous les joueurs aient validé les réponses.");return}
  $("nextVotePlayer").disabled=true;
  emit("vote:next-player",{code:roomCode,index:currentVoteIndex});
 });
+let voteAutoAdvance=null;
+function maybeAutoAdvanceVote(){
+ if(allVotesIn()){
+  clearTimeout(voteAutoAdvance);
+  voteAutoAdvance=setTimeout(()=>{
+   if(allVotesIn()&&isHost&&document.body.dataset.view==="voteView"&&!$("nextVotePlayer").disabled){
+    emit("vote:next-player",{code:roomCode,index:currentVoteIndex});
+   }
+  },1500);
+ }
+}
 
 /* ---------- Résultats ---------- */
 function renderResults(data={}){
@@ -1339,8 +1461,44 @@ function updateChatBadge(){
 function pushChat(key,m){
  const arr=chatStore[key]||(chatStore[key]=[]);
  arr.push(m);if(arr.length>120)arr.shift();
- if(m.kind==="in"&&!(phoneVisible()&&activeChat===key))unread[key]=(unread[key]||0)+1;
+ const showing=phoneVisible()&&activeChat===key;
+ if(m.kind==="in"&&!showing){
+  unread[key]=(unread[key]||0)+1;
+  notifyChat(key,m.name,m.text);
+ }
  updateChatBadge();renderPhone();
+}
+/* Notification popup quand un joueur t'envoie un message */
+let notifAudioCtx=null;
+function notifSound(){
+ try{
+  notifAudioCtx=notifAudioCtx||new (window.AudioContext||window.webkitAudioContext)();
+  const o=notifAudioCtx.createOscillator(),g=notifAudioCtx.createGain();
+  o.type="sine";o.frequency.setValueAtTime(880,notifAudioCtx.currentTime);
+  o.frequency.setValueAtTime(1175,notifAudioCtx.currentTime+0.12);
+  g.gain.setValueAtTime(0.18,notifAudioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,notifAudioCtx.currentTime+0.35);
+  o.connect(g);g.connect(notifAudioCtx.destination);
+  o.start();o.stop(notifAudioCtx.currentTime+0.4);
+ }catch(e){}
+}
+function notifyChat(key,name,text){
+ const stack=$("chatNotifStack");if(!stack)return;
+ const isGroup=key==="all";
+ const icon=isGroup?"👥":(playerById(key)?findMonster(playerById(key).avatar?.monsterId).emoji:"💬");
+ const div=document.createElement("div");
+ div.className="chat-notif";
+ div.innerHTML=`<span class="n-av">${icon}</span><span class="n-body"><span class="n-name">${escapeHTML(name||"Joueur")}${isGroup?"":' <span class="n-tag">privé</span>'}</span><span class="n-text">${escapeHTML(String(text||""))}</span></span><button class="n-close" aria-label="Fermer">✕</button>`;
+ const close=()=>{div.classList.add("hide");setTimeout(()=>div.remove(),320)};
+ div.querySelector(".n-close").addEventListener("click",e=>{e.stopPropagation();close()});
+ div.addEventListener("click",()=>{
+  if(!phone.classList.contains("docked")){phoneOpen=true;phone.classList.add("open")}
+  renderPhone();openChat(key);close();
+ });
+ stack.appendChild(div);
+ notifSound();
+ setTimeout(close,5000);
+ while(stack.children.length>4)stack.firstChild.remove();
 }
 function lastPreview(key){
  const arr=(chatStore[key]||[]).filter(m=>m.kind!=="sys");
@@ -1715,10 +1873,14 @@ if(socket){
  });
  socket.on("vote:update",data=>{
   if(data.targetPlayerId!==currentVoteTarget)return;
+  const v=voteCounts[data.category]||(voteCounts[data.category]={});
+  v.accept=data.accept??v.accept??0;v.reject=data.reject??v.reject??0;
   const row=[...$("voteAnswers").children].find(r=>r.dataset.category===data.category);
   const text=`Votes : ${data.accept||0} pour, ${data.reject||0} contre.`;
   if(row)row.querySelector("[data-vote-status]").textContent=text;
-  $("voteStatus").textContent=text;
+  if(!allVotesIn())$("voteStatus").textContent=text;
+  updateVoteContinueUI();
+  maybeAutoAdvanceVote();
  });
  socket.on("round:results",data=>{
   clearInterval(timerInterval);
@@ -1735,9 +1897,7 @@ if(socket){
  socket.on("power:spy-result",data=>toast("🕵️ "+(data.message||"")));
  socket.on("chat:private",data=>{
   const key=data.fromId||(currentRoom?.players||[]).find(p=>p.name===data.from)?.id||"all";
-  const showing=phoneVisible()&&activeChat===key;
   pushChat(key,{kind:"in",name:data.from,text:String(data.text||""),at:Date.now()});
-  if(!showing)toast(`✉️ Message privé de ${data.from||"Joueur"}`);
  });
  socket.on("chat:private:notice",msg=>toast(String(msg)));
  socket.on("chat:message",data=>{
