@@ -220,6 +220,19 @@ p {line-height:1.6}
   .phone-panel .chat-form button,.phone-close{min-height:44px;touch-action:manipulation}
 }
 
+
+@media (max-width:600px) {
+ .topbar{padding:12px;align-items:flex-start;flex-wrap:wrap}
+ .avatar-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+ .avatar-option{padding:6px;border-radius:14px}
+ .avatar-option canvas{height:82px}
+ .stage{min-height:190px;border-radius:18px}
+ .stage canvas{height:210px}
+ .countdown{font-size:clamp(48px,14vw,72px)}
+ .panel{padding:14px!important}
+ .player{padding:8px;gap:8px}
+ .player canvas{width:48px;height:48px}
+}
 </style>
 </head>
 
@@ -253,15 +266,15 @@ p {line-height:1.6}
       </div>
     </div>
     <div class="panel">
-      <h2>👾 Choisis ton monstre 3D</h2>
-      <p class="muted">Sélectionne ton compagnon. Tu pourras le personnaliser davantage avec les pièces gagnées en jouant.</p>
+      <h2>🧑 Choisis ton avatar</h2>
+      <p class="muted">Choisis ton personnage et personnalise son apparence avec les pièces gagnées en jouant.</p>
       <div class="avatar-grid" id="avatarPicker"></div>
       <div class="grid" style="margin-top:14px">
         <div class="field"><label>COULEUR</label><input id="avatarColor" type="color" value="#8b6cff" style="height:48px;padding:5px"></div>
         <div class="field"><label>ACCESSOIRE</label><select id="accessory"><option value="none">Aucun</option><option value="crown">Couronne 👑</option><option value="glasses">Lunettes 🕶️</option><option value="hat">Chapeau 🎩</option><option value="star">Étoile ⭐</option><option value="pizza">Pizza 🍕</option><option value="birthday">Chapeau d’anniversaire 🎉</option><option value="bcdshirt">T-shirt B C D 👕</option></select></div>
       </div>
       <div class="stage"><canvas id="preview3d"></canvas></div>
-      <p class="muted">Les avatars sont des modèles 3D procéduraux. Tu peux les remplacer par tes propres modèles GLB plus tard.</p>
+      <p class="muted">Des avatars colorés et personnalisables pour chaque joueur.</p>
     </div>
   </section>
 
@@ -391,18 +404,18 @@ const CATEGORIES = [
 ];
 
 const MONSTERS = [
- {id:"blobito",name:"Blobito",emoji:"🫧",shape:"blob",color:"#8b6cff"},
- {id:"flamby",name:"Flamby",emoji:"🔥",shape:"fire",color:"#ff704d"},
- {id:"cyclopi",name:"Cyclopi",emoji:"👁️",shape:"cyclops",color:"#4fc5f5"},
- {id:"piquito",name:"Piquito",emoji:"🌵",shape:"spike",color:"#55d99a"},
- {id:"touffu",name:"Touffu",emoji:"☁️",shape:"fluffy",color:"#ff9ac8"},
- {id:"ombrix",name:"Ombrix",emoji:"🌑",shape:"ghost",color:"#69617f"},
- {id:"voltix",name:"Voltix",emoji:"⚡",shape:"electric",color:"#ffe06a"},
- {id:"goutti",name:"Goutti",emoji:"💧",shape:"drop",color:"#5cbdff"},
- {id:"rococo",name:"Rococo",emoji:"🪨",shape:"rock",color:"#b39a87"},
- {id:"fantomix",name:"Fantomix",emoji:"👻",shape:"ghost",color:"#c3b5ff"},
- {id:"zouzou",name:"Zouzou",emoji:"👽",shape:"alien",color:"#a3df68"},
- {id:"arc-en-boum",name:"Arc-en-boum",emoji:"🌈",shape:"blob",color:"#ff83bb"}
+ {id:"louis",name:"Louis",emoji:"🧑🏻‍🎤",shape:"human",color:"#8b6cff"},
+ {id:"sophie",name:"Sophie",emoji:"👩🏼",shape:"human",color:"#ff83bb"},
+ {id:"tom",name:"Tom",emoji:"👨🏻‍🦱",shape:"human",color:"#4fc5f5"},
+ {id:"chloe",name:"Chloé",emoji:"👩🏻‍🦰",shape:"human",color:"#ff9a6b"},
+ {id:"enzo",name:"Enzo",emoji:"🧑🏽‍🎓",shape:"human",color:"#55d99a"},
+ {id:"maya",name:"Maya",emoji:"👩🏽",shape:"human",color:"#ffe06a"},
+ {id:"leo",name:"Léo",emoji:"👨🏾",shape:"human",color:"#5cbdff"},
+ {id:"jade",name:"Jade",emoji:"👩🏻‍🦱",shape:"human",color:"#b39aff"},
+ {id:"noah",name:"Noah",emoji:"👨🏼‍🦰",shape:"human",color:"#f58a6c"},
+ {id:"emma",name:"Emma",emoji:"👩🏾‍🦱",shape:"human",color:"#c3b5ff"},
+ {id:"adam",name:"Adam",emoji:"🧑🏻",shape:"human",color:"#a3df68"},
+ {id:"alex",name:"Alex",emoji:"🧑🏼‍🎨",shape:"human",color:"#ff83bb"}
 ];
 
 // Boutique cosmétique : les prix affichés viennent du serveur (game:config) ; ceci est le repli.
@@ -604,7 +617,7 @@ function createMonsterScene(canvas,avatar={},small=false) {
   const smile=new THREE.Mesh(new THREE.TorusGeometry(.16,.035,8,20,Math.PI),black);
   smile.position.set(0,-.19,.53);smile.rotation.z=Math.PI;root.add(smile);
   // Petites cornes optionnelles selon le monstre
-  if(["flamby","piquito","voltix"].includes(avatar.monsterId||selectedMonster.id)){
+  if(false){
    for(const x of [-.48,.48]){
     const horn=new THREE.Mesh(new THREE.ConeGeometry(.13,.32,12),mat);
     horn.position.set(x,.72,.05);horn.rotation.z=x<0?.35:-.35;root.add(horn);
@@ -1306,7 +1319,11 @@ if(socket) {
  });
  socket.on("power:friend-request",data=>toast(`📞 ${data.from} fait appel à toi !`));
  socket.on("power:spy-result",data=>toast("🕵️ "+(data.message||"")));
- socket.on("chat:private",data=>toast(`✉️ ${data.from} : ${data.text}`));
+ socket.on("chat:private",data=>{
+  const line={name:`✉️ Privé de ${data.from||"Joueur"}`,text:String(data.text||""),system:false};
+  addChat(line);
+  toast(`✉️ Message privé de ${data.from||"Joueur"}`);
+ });
  socket.on("chat:private:notice",msg=>toast(String(msg)));
  socket.on("chat:message",addChat);
  socket.on("app:error",data=>{
