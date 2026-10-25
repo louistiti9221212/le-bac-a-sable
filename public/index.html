@@ -188,6 +188,14 @@ p {line-height:1.6}
   .shop-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
   .answer-row {grid-template-columns:1fr}
 }
+
+/* Roue des lettres */
+.letter-wheel-wrap{max-width:320px;margin:18px auto 22px;text-align:center;position:relative}
+.letter-wheel-pointer{font-size:27px;line-height:1;color:#ff65a3;position:relative;z-index:3;margin-bottom:-8px;text-shadow:0 2px 5px #0002}
+.letter-wheel{width:min(72vw,280px);aspect-ratio:1;margin:0 auto;border:8px solid #fff;border-radius:50%;position:relative;background:conic-gradient(#ff709e 0deg 13.85deg,#ffca57 13.85deg 27.7deg,#67dcb0 27.7deg 41.55deg,#62c9ff 41.55deg 55.4deg,#a68bff 55.4deg 69.25deg,#ff8fcb 69.25deg 83.1deg,#ffcf68 83.1deg 96.95deg,#64dcb9 96.95deg 110.8deg,#62c9ff 110.8deg 124.65deg,#aa92ff 124.65deg 138.5deg,#ff709e 138.5deg 152.35deg,#ffca57 152.35deg 166.2deg,#67dcb0 166.2deg 180.05deg,#62c9ff 180.05deg 193.9deg,#a68bff 193.9deg 207.75deg,#ff8fcb 207.75deg 221.6deg,#ffcf68 221.6deg 235.45deg,#64dcb9 235.45deg 249.3deg,#62c9ff 249.3deg 263.15deg,#aa92ff 263.15deg 277deg,#ff709e 277deg 290.85deg,#ffca57 290.85deg 304.7deg,#67dcb0 304.7deg 318.55deg,#62c9ff 318.55deg 332.4deg,#a68bff 332.4deg 346.25deg,#ff8fcb 346.25deg 360deg);box-shadow:0 12px 25px #59439b30;transition:transform 2s cubic-bezier(.12,.72,.08,1);}
+.letter-wheel:after{content:"✦";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:48px;height:48px;border-radius:50%;background:#fff;color:#7657ff;display:grid;place-items:center;border:4px solid #eee8ff;font-size:25px;font-weight:1000}
+.letter-wheel-label{position:absolute;left:50%;top:50%;width:24px;height:24px;margin:-12px;font-weight:1000;font-size:13px;color:#24213d;text-align:center;display:grid;place-items:center;text-shadow:0 1px 0 #fff9}
+@media(max-width:480px){.letter-wheel-wrap{margin:12px auto}.letter-wheel-label{font-size:11px}}
 </style>
 </head>
 
@@ -282,7 +290,8 @@ p {line-height:1.6}
   <!-- JEU -->
   <section class="view" id="gameView">
     <div class="row"><div><span class="badge">MANCHE <span id="roundNumber">1</span></span><h1>À toi de jouer !</h1></div><div class="pill">⏱️ <span id="timer">60</span>s</div></div>
-    <div class="theme-display"><div>LA LETTRE</div><strong id="roundLetter">?</strong><div style="margin-top:8px">Thèmes : <b id="gameTheme">En attente</b></div></div>
+    <div class="theme-display"><div>LA LETTRE TIRÉE</div><strong id="roundLetter">?</strong><div style="margin-top:8px">Thèmes : <b id="gameTheme">En attente</b></div></div>
+    <div class="panel" style="text-align:center"><h2>🎡 Roue des lettres</h2><p class="muted">La roue tourne et s’arrête sur la lettre choisie pour la manche.</p><div class="letter-wheel-wrap"><div class="letter-wheel-pointer">▼</div><div id="letterWheel" class="letter-wheel" aria-label="Roue des lettres"></div></div><p id="letterWheelStatus" class="muted">En attente du tirage…</p></div>
     <div class="panel"><h2>✍️ Tes réponses</h2><div id="answerGrid" class="answer-grid"></div>
       <div class="actions" style="margin-top:16px"><button class="btn primary" id="submitAnswers">Envoyer mes réponses 🚀</button></div>
       <p class="muted" id="answerStatus">Une réponse par catégorie. Les joueurs voteront ensuite pour décider si elle est valide.</p>
@@ -1154,6 +1163,32 @@ if(socket) {
    renderPicked(data.selectedThemes||[],data.total||8);
   });
  });
+ function setupLetterWheel(){
+  const wheel=$("letterWheel"); if(!wheel || wheel.dataset.ready)return;
+  const alphabet="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  [...alphabet].forEach((letter,i)=>{
+   const span=document.createElement("span");span.className="letter-wheel-label";span.textContent=letter;
+   span.style.transform=`rotate(${i*360/26}deg) translateY(-${Math.min(112, wheel.clientWidth*.40)}px) rotate(${-i*360/26}deg)`;
+   wheel.appendChild(span);
+  });
+  wheel.dataset.ready="1";
+ }
+ function spinLetterWheel(letter){
+  setupLetterWheel();
+  const wheel=$("letterWheel");if(!wheel)return;
+  const alphabet="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const target=String(letter||"?").toUpperCase();
+  const index=alphabet.indexOf(target);
+  $("letterWheelStatus").textContent="La roue tourne…";
+  wheel.style.transition="none";wheel.style.transform="rotate(0deg)";void wheel.offsetWidth;
+  if(index<0){$("letterWheelStatus").textContent="Lettre reçue : "+target;return;}
+  // Les lettres sont disposées dans le sens horaire depuis le haut : on aligne la cible sous la flèche.
+  const angle=360-index*(360/26);
+  wheel.style.transition="transform 1.8s cubic-bezier(.12,.72,.08,1)";
+  wheel.style.transform=`rotate(${360*5+angle}deg)`;
+  setTimeout(()=>{$("letterWheelStatus").textContent="Lettre sélectionnée : "+target;},1850);
+ }
+
  socket.on("game:round",data=>{
   clearInterval(countdownInterval);stopIdleSpin();clearTimeout(landTimer);
   setServerClock(data.now);
@@ -1164,6 +1199,7 @@ if(socket) {
   const categories=data.categories||CATEGORIES;
   $("roundNumber").textContent=currentRound;
   $("roundLetter").textContent=data.letter||"?";
+  spinLetterWheel(data.letter||"?");
   $("gameTheme").textContent=`${categories.length} thèmes tirés à la roulette`;
   buildAnswerGrid(categories);
   answersSubmitted=false;$("submitAnswers").disabled=false;
