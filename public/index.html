@@ -297,6 +297,45 @@ input:focus,select:focus{border-color:var(--violet)}
 .d-pink{right:12%;top:-150px;width:min(17vw,220px);transform:rotate(3deg)}
 .d-pink .sticky{font-size:clamp(14px,1.3vw,19px);text-align:left;padding:16px 14px}
 
+
+/* ---------- Téléphone : liste de discussions ---------- */
+.phone-title{font:800 19px var(--display);line-height:1.1}
+.phone-who small{display:block;color:#cdc6ff;font-weight:700;font-size:12px}
+.phone-pane{flex:1;display:none;flex-direction:column;min-height:0;background:#f1ecff}
+.phone-pane.on{display:flex}
+.contact-list{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px}
+.contact-label{font:800 12px var(--display);color:#6f69a6;margin:8px 4px 0;letter-spacing:.5px}
+.contact{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border-radius:16px;background:#fff;border:2px solid #e1dcf7;text-align:left;color:var(--navy)}
+.contact:hover{border-color:#6a56f0;background:#f6f3ff}
+.contact.group{background:linear-gradient(#e6f7ff,#f1ecff);border-color:#8fc9ff}
+.c-av{width:46px;height:46px;border-radius:50%;background:linear-gradient(#bfe6ff,#ffd7ec);border:3px solid #fff;box-shadow:0 0 0 2px #cfc8f3;display:grid;place-items:center;font-size:24px;flex:none}
+.c-info{flex:1;min-width:0}
+.c-name{display:block;font:800 17px var(--display)}
+.c-prev{display:block;font-size:12px;color:#8c86bd;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c-badge{min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:#ff4f98;color:#fff;font:800 13px/22px var(--display);text-align:center}
+.c-empty{text-align:center;color:#8c86bd;font-weight:700;font-size:13px;padding:10px}
+.phone-to{padding:6px 12px;font-size:12px;font-weight:800;background:#e8e2ff;color:#4a35c9;text-align:center}
+.phone-to.private{background:#ffe3f0;color:#b3246a}
+.hud-btn{position:relative}
+.hud-badge{position:absolute;top:-7px;right:-7px;min-width:22px;height:22px;border-radius:11px;background:#ff4f98;color:#fff;font:800 13px/22px var(--display);text-align:center;border:2px solid #150e45;display:none;padding:0 4px}
+
+/* ---------- Éditeur de personnage ---------- */
+.modal{position:fixed;inset:0;background:#150e45b8;z-index:3000;display:none;align-items:center;justify-content:center;padding:14px}
+.modal.open{display:flex}
+.modal-card{width:min(900px,100%);max-height:94vh;overflow:auto;margin:0}
+.editor{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:18px}
+.ed-label{font:800 13px var(--display);color:#55429e;letter-spacing:.5px;margin:12px 0 6px}
+.char-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.char-btn,.acc-btn{background:linear-gradient(#dff4ff,#fff0f8);border:3px solid #7fc2ff;border-radius:14px;padding:6px 2px;color:var(--navy);font:800 12px var(--display);text-align:center;box-shadow:0 3px 0 #7d5cd4}
+.char-btn span,.acc-btn span{display:block;font-size:26px;line-height:1.1}
+.char-btn.sel,.acc-btn.sel{background:linear-gradient(#fff0a8,#ffc6e5);border-color:#ff5ca8;box-shadow:0 3px 0 #9b3b9d}
+.acc-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.swatches{display:flex;flex-wrap:wrap;gap:8px}
+.swatch{width:38px;height:38px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px #b9baff;font-size:15px;color:#6f69a6}
+.swatch.sel{box-shadow:0 0 0 4px #ff5ca8}
+#edColor{height:46px;padding:4px}
+@media(max-width:760px){.editor{grid-template-columns:1fr}.char-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
 /* ---------- Responsive ---------- */
 @media(max-width:1280px){
   .game-layout{grid-template-columns:190px minmax(0,1fr) 330px}
@@ -339,13 +378,14 @@ input:focus,select:focus{border-color:var(--violet)}
   </div>
 
   <div class="hud-right">
-    <button class="hud-btn" id="chatToggle" aria-label="Téléphone">💬</button>
+    <button class="hud-btn" id="chatToggle" aria-label="Téléphone">💬<span class="hud-badge" id="chatBadge"></span></button>
     <div class="hud-note">Bon jeu ! ☺</div>
     <div class="coin-pill" id="coinPill" title="Ouvrir la boutique"><span class="coin-ico">♛</span><span id="coinCount">0</span><span class="plus">+</span></div>
     <div class="power-pill" id="powerPill" title="Mes pouvoirs"><span class="bolt">⚡</span><span id="powerCount">0/2</span></div>
     <div class="settings-wrap">
       <button class="hud-btn" id="gearBtn" aria-label="Réglages">⚙️</button>
       <div class="settings-menu" id="settingsMenu">
+        <button class="btn yellow full" id="menuEdit">✏️ Mon personnage</button>
         <button class="btn light full" id="menuShop">🛍️ Boutique</button>
         <button class="btn danger full" id="menuLeave">🚪 Quitter la partie</button>
       </div>
@@ -379,6 +419,7 @@ input:focus,select:focus{border-color:var(--violet)}
     <div class="panel">
       <h2>🧑 Choisis ton avatar</h2>
       <p class="muted">Choisis ton personnage et personnalise-le avec les pièces gagnées en jouant.</p>
+      <button class="btn yellow" id="editHomeBtn" style="margin-bottom:12px">✏️ Modifier mon personnage</button>
       <div class="avatar-grid" id="avatarPicker"></div>
       <div class="grid" style="margin-top:14px">
         <div class="field"><label>COULEUR DU T-SHIRT</label><input id="avatarColor" type="color" value="#8b6cff" style="height:48px;padding:5px"></div>
@@ -401,6 +442,7 @@ input:focus,select:focus{border-color:var(--violet)}
           <div id="playersList" class="player-list"></div>
           <div class="actions" style="margin-top:18px">
             <button class="btn green" id="readyBtn">Je suis prêt ✓</button>
+            <button class="btn yellow" id="editLobbyBtn">✏️ Mon personnage</button>
             <button class="btn primary" id="startBtn">Lancer la partie 🚀</button>
           </div>
           <p class="muted" id="lobbyStatus" style="font-weight:800">En attente des joueurs…</p>
@@ -485,7 +527,7 @@ input:focus,select:focus{border-color:var(--violet)}
   <!-- RÉSULTATS -->
   <section class="view" id="resultsView">
     <div class="hero"><div class="badge">🏆 FIN DE MANCHE</div><h1>Les résultats !</h1><p>Voici le classement actualisé.</p></div>
-    <div class="panel"><div id="roundResults"></div><button class="btn primary full" id="nextRound" style="margin-top:15px">Manche suivante →</button><p class="muted" id="resultsHostHint" style="display:none;text-align:center">En attente de l'hôte…</p></div>
+    <div class="panel"><div id="roundResults"></div><button class="btn yellow full" id="editResultsBtn" style="margin-top:15px">✏️ Modifier mon personnage</button><button class="btn primary full" id="nextRound" style="margin-top:12px">Manche suivante →</button><p class="muted" id="resultsHostHint" style="display:none;text-align:center">En attente de l'hôte…</p></div>
   </section>
 
   <!-- BOUTIQUE -->
@@ -542,24 +584,51 @@ input:focus,select:focus{border-color:var(--violet)}
   <div class="d-pink"><div class="sticky pink">Plus ta réponse est rare, plus tu gagnes d'argent ! ♛</div></div>
 </div>
 
+<!-- Éditeur de personnage -->
+<div class="modal" id="editorModal" role="dialog" aria-modal="true" aria-label="Modifier mon personnage">
+  <div class="modal-card panel">
+    <div class="row"><h2 style="margin:0">✏️ Modifier mon personnage</h2><button class="btn light" id="edClose" aria-label="Fermer">✕</button></div>
+    <div class="editor">
+      <div><div class="stage" style="margin-top:8px;min-height:300px"><canvas id="edCanvas"></canvas></div></div>
+      <div>
+        <div class="ed-label">PERSONNAGE</div><div class="char-grid" id="edChars"></div>
+        <div class="ed-label">COULEUR DU T-SHIRT</div><input type="color" id="edColor" value="#3c9bff">
+        <div class="ed-label">PEAU</div><div class="swatches" id="edSkin"></div>
+        <div class="ed-label">CHEVEUX</div><div class="swatches" id="edHair"></div>
+        <div class="ed-label">ACCESSOIRE</div><div class="acc-grid" id="edAcc"></div>
+      </div>
+    </div>
+    <div class="actions" style="margin-top:16px">
+      <button class="btn green" id="edSave">Enregistrer ✓</button>
+      <button class="btn light" id="edReset">Réinitialiser</button>
+      <button class="btn danger" id="edCancel">Annuler</button>
+    </div>
+    <p class="muted" id="edHint" style="font-weight:700;margin:8px 0 0"></p>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
-<!-- Téléphone de discussion (déplacé dans l'écran de jeu / salon, flottant ailleurs) -->
+<!-- Téléphone : liste des discussions (groupe + privés) puis conversation -->
 <div class="phone floating" id="phone" aria-label="Téléphone de discussion">
   <div class="phone-screen">
     <div class="phone-head">
-      <button class="phone-back" id="phoneClose" aria-label="Fermer">‹</button>
-      <div class="phone-av" id="phoneAv">👥</div>
+      <button class="phone-back" id="phoneBack" aria-label="Retour aux discussions" style="display:none">‹</button>
+      <div class="phone-av" id="phoneAv">💬</div>
       <div class="phone-who">
-        <select id="phoneRecipient" aria-label="Destinataire"><option value="all">Tout le salon</option></select>
-        <small id="phoneStatus">En ligne</small>
+        <div class="phone-title" id="phoneTitle">Messages</div>
+        <small id="phoneStatus">Choisis une discussion</small>
       </div>
-      <span style="font-size:20px">⋮</span>
+      <button class="phone-back" id="phoneClose" aria-label="Fermer">✕</button>
     </div>
-    <div class="phone-log" id="phoneLog" aria-live="polite"></div>
-    <div class="phone-input">
-      <input id="phoneInput" maxlength="180" placeholder="Écris un message…" autocomplete="off">
-      <button class="phone-send" id="phoneSend" aria-label="Envoyer">➤</button>
+    <div class="phone-pane on" id="phoneListPane"><div class="contact-list" id="contactList"></div></div>
+    <div class="phone-pane" id="phoneConvPane">
+      <div class="phone-log" id="phoneLog" aria-live="polite"></div>
+      <div class="phone-to" id="phoneTo"></div>
+      <div class="phone-input">
+        <input id="phoneInput" maxlength="180" placeholder="Écris un message…" autocomplete="off">
+        <button class="phone-send" id="phoneSend" aria-label="Envoyer">➤</button>
+      </div>
     </div>
     <div class="phone-foot"><i></i></div>
   </div>
@@ -637,6 +706,8 @@ const MAX_INVENTORY = 2;
 let selectedMonster = MONSTERS[0];
 let customColor = selectedMonster.color;
 let accessory = "none";
+let customSkin = null;
+let customHair = null;
 let roomCode = "";
 let playerId = "";
 let myName = "";
@@ -687,7 +758,7 @@ function emit(event,payload={}) {
 function safeText(v){return String(v ?? "")}
 function escapeHTML(v){return safeText(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function findMonster(id){return MONSTERS.find(m=>m.id===id)||MONSTERS[0]}
-function currentAvatar(){return {monsterId:selectedMonster.id,color:customColor,accessory}}
+function currentAvatar(){return {monsterId:selectedMonster.id,color:customColor,accessory,skin:customSkin,hair:customHair}}
 function myPlayer(){return (currentRoom?.players||[]).find(p=>p.id===playerId)}
 function setCoins(value){
  coins=Math.max(0,Number(value)||0);
@@ -776,8 +847,8 @@ function createMonsterScene(canvas,avatar={},small=false){
   const ch=findMonster(avatar.monsterId||selectedMonster.id);
   const acc=avatar.accessory||"none";
   const shirtColor=new THREE.Color(avatar.color||ch.color);
-  const skin=new THREE.MeshStandardMaterial({color:ch.skin,roughness:.55});
-  const hairMat=new THREE.MeshStandardMaterial({color:ch.hair,roughness:.5});
+  const skin=new THREE.MeshStandardMaterial({color:new THREE.Color(avatar.skin||ch.skin),roughness:.55});
+  const hairMat=new THREE.MeshStandardMaterial({color:new THREE.Color(avatar.hair||ch.hair),roughness:.5});
   const shirt=new THREE.MeshPhysicalMaterial({color:acc==="bcdshirt"?0xffffff:shirtColor,roughness:.6,clearcoat:.2});
   const white=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.22});
   const black=new THREE.MeshStandardMaterial({color:0x28243c,roughness:.16});
@@ -923,7 +994,7 @@ function renderAvatarPicker(){
   btn.className="avatar-option"+(m.id===selectedMonster.id?" selected":"");
   btn.innerHTML=`<canvas width="180" height="120"></canvas><span>${escapeHTML(m.name)}</span>`;
   btn.addEventListener("click",()=>{
-   selectedMonster=m;customColor=m.color;$("avatarColor").value=m.color;
+   selectedMonster=m;customColor=m.color;customSkin=null;customHair=null;$("avatarColor").value=m.color;
    document.querySelectorAll(".avatar-option").forEach(x=>x.classList.remove("selected"));
    btn.classList.add("selected");refreshPreview();emit("avatar:update",{avatar:currentAvatar()});
   });
@@ -1172,8 +1243,8 @@ function buyItem(id){
 function usePower(id){
  let targetId;
  if(id==="friend"){
-  targetId=$("phoneRecipient").value;
-  if(!targetId||targetId==="all"){toast("Choisis d'abord un joueur dans le téléphone 📱");return}
+  if(!activeChat||activeChat==="all"){toast("Ouvre une discussion privée avec un joueur dans le téléphone 📱");return}
+  targetId=activeChat;
  }
  emit("power:use",{powerId:id,targetId});
 }
@@ -1253,68 +1324,197 @@ function renderShop(){
  });
 }
 
-/* ---------- Téléphone de discussion ---------- */
-const chatHistory=[];
+/* ---------- Téléphone : chat de groupe + messages privés ---------- */
+const chatStore={all:[]};
+const unread={};
+let activeChat=null; // null = liste des discussions, "all" = groupe, sinon identifiant du joueur
+let phoneAvKey="";
 function fmtTime(at){const d=new Date(at||Date.now());return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")}
-function renderChat(){
+function phoneVisible(){return phone.classList.contains("docked")||phone.classList.contains("open")}
+function playerById(id){return (currentRoom?.players||[]).find(p=>p.id===id)}
+function updateChatBadge(){
+ const n=Object.values(unread).reduce((x,y)=>x+y,0);
+ const badge=$("chatBadge");badge.textContent=n>9?"9+":String(n);badge.style.display=n?"block":"none";
+}
+function pushChat(key,m){
+ const arr=chatStore[key]||(chatStore[key]=[]);
+ arr.push(m);if(arr.length>120)arr.shift();
+ if(m.kind==="in"&&!(phoneVisible()&&activeChat===key))unread[key]=(unread[key]||0)+1;
+ updateChatBadge();renderPhone();
+}
+function lastPreview(key){
+ const arr=(chatStore[key]||[]).filter(m=>m.kind!=="sys");
+ const m=arr[arr.length-1];
+ if(!m)return key==="all"?"Tout le salon":"Aucun message — touche pour écrire";
+ return (m.kind==="out"?"Toi : ":(key==="all"&&m.name?m.name+" : ":""))+m.text;
+}
+function contactBtn(key,icon,name,prev,group){
+ const b=document.createElement("button");b.className="contact"+(group?" group":"");
+ const n=unread[key]||0;
+ b.innerHTML=`<span class="c-av">${icon}</span><span class="c-info"><span class="c-name">${escapeHTML(name)}</span><span class="c-prev">${escapeHTML(prev)}</span></span>${n?`<span class="c-badge">${n}</span>`:""}`;
+ b.addEventListener("click",()=>openChat(key));
+ return b;
+}
+function renderContacts(){
+ const list=$("contactList");list.innerHTML="";
+ const label=t=>{const d=document.createElement("div");d.className="contact-label";d.textContent=t;return d};
+ list.appendChild(label("👥 CHAT DE GROUPE"));
+ list.appendChild(contactBtn("all","👥","Chat de groupe",lastPreview("all"),true));
+ list.appendChild(label("✉️ MESSAGES PRIVÉS — choisis un pseudo"));
+ const others=(currentRoom?.players||[]).filter(p=>p.id!==playerId);
+ if(!others.length){const e=document.createElement("div");e.className="c-empty";e.textContent="Aucun autre joueur pour le moment.";list.appendChild(e)}
+ others.forEach(p=>list.appendChild(contactBtn(p.id,findMonster(p.avatar?.monsterId).emoji,p.name||"Joueur",lastPreview(p.id),false)));
+}
+function setPhoneAvatar(key){
+ const box=$("phoneAv");
+ const target=key&&key!=="all"?playerById(key):null;
+ const sig=target?key+JSON.stringify(target.avatar):(key==="all"?"all":"none");
+ if(sig===phoneAvKey)return;
+ phoneAvKey=sig;
+ disposeIn(box,true);box.innerHTML="";
+ if(!target){box.textContent=key==="all"?"👥":"💬";return}
+ const canvas=document.createElement("canvas");canvas.width=92;canvas.height=92;box.appendChild(canvas);
+ createMonsterScene(canvas,target.avatar||{},true);
+}
+function renderLog(key){
  const log=$("phoneLog");log.innerHTML="";
- chatHistory.slice(-60).forEach(m=>{
+ (chatStore[key]||[]).slice(-60).forEach(m=>{
   const div=document.createElement("div");
   if(m.kind==="sys"){div.className="msg-sys";div.textContent=m.text}
   else{
    div.className="bubble "+(m.kind==="out"?"out":"in");
-   const who=m.kind==="in"&&m.name?`<b>${escapeHTML(m.name)}</b>`:"";
+   const who=m.kind==="in"&&m.name&&key==="all"?`<b>${escapeHTML(m.name)}</b>`:"";
    div.innerHTML=`${who}${escapeHTML(m.text)}<span class="time">${fmtTime(m.at)}${m.kind==="out"?" ✓✓":""}</span>`;
   }
   log.appendChild(div);
  });
  log.scrollTop=log.scrollHeight;
 }
-function pushChat(m){chatHistory.push(m);if(chatHistory.length>120)chatHistory.shift();renderChat()}
-function renderChatRecipients(players=[]){
- const select=$("phoneRecipient");
- const previous=select.value||"all";
- select.innerHTML="";
- const all=document.createElement("option");all.value="all";all.textContent="Tout le salon";select.appendChild(all);
- players.filter(p=>p.id&&p.id!==playerId).forEach(p=>{
-  const o=document.createElement("option");o.value=p.id;o.textContent=p.name||"Joueur";select.appendChild(o);
- });
- select.value=[...select.options].some(o=>o.value===previous)?previous:"all";
- refreshPhoneAvatar();
+function renderConv(){
+ const key=activeChat;
+ const isGroup=key==="all";
+ const target=isGroup?null:playerById(key);
+ const gone=!isGroup&&!target;
+ $("phoneTitle").textContent=isGroup?"Chat de groupe":(target?.name||"Joueur parti");
+ $("phoneStatus").textContent=isGroup?`Tout le salon · ${(currentRoom?.players||[]).length} joueur(s)`:(gone?"Hors ligne":"En ligne · message privé");
+ setPhoneAvatar(key);
+ const to=$("phoneTo");
+ to.className="phone-to"+(isGroup?"":" private");
+ to.textContent=isGroup?"👥 Envoi au chat de groupe : tout le salon verra ton message":(gone?"Ce joueur a quitté la partie":`🔒 Envoi privé à ${target.name} : seul(e) ${target.name} le verra`);
+ $("phoneInput").disabled=gone;$("phoneSend").disabled=gone;
+ renderLog(key);
 }
-let phoneAvKey="";
-function refreshPhoneAvatar(){
- const id=$("phoneRecipient").value;
- const target=(currentRoom?.players||[]).find(p=>p.id===id);
- const key=id==="all"||!target?"all":id+JSON.stringify(target.avatar);
- if(key===phoneAvKey)return;
- phoneAvKey=key;
- const box=$("phoneAv");
- disposeIn(box,true);box.innerHTML="";
- if(key==="all"){box.textContent="👥";return}
- const canvas=document.createElement("canvas");canvas.width=92;canvas.height=92;box.appendChild(canvas);
- createMonsterScene(canvas,target.avatar||{},true);
+function renderPhone(){
+ const inConv=activeChat!==null;
+ $("phoneListPane").classList.toggle("on",!inConv);
+ $("phoneConvPane").classList.toggle("on",inConv);
+ $("phoneBack").style.display=inConv?"block":"none";
+ if(!inConv){
+  $("phoneTitle").textContent="Messages";$("phoneStatus").textContent="Choisis une discussion";
+  setPhoneAvatar(null);renderContacts();
+ } else renderConv();
 }
-$("phoneRecipient").addEventListener("change",refreshPhoneAvatar);
+function openChat(key){
+ activeChat=key;unread[key]=0;updateChatBadge();
+ renderPhone();
+ setTimeout(()=>$("phoneInput").focus(),50);
+}
 function sendChat(){
  const text=$("phoneInput").value.trim();
  if(!text)return;
  if(!roomCode||!hasJoined){toast("Rejoins un salon pour envoyer un message.");return}
- const recipientId=$("phoneRecipient").value;
- if(recipientId&&recipientId!=="all"){
-  emit("chat:private",{targetId:recipientId,text});
-  pushChat({kind:"out",text,at:Date.now()});
- } else emit("chat:send",{text,code:roomCode});
+ if(activeChat===null){toast("Choisis d'abord une discussion.");return}
+ if(activeChat==="all"){
+  emit("chat:send",{text,code:roomCode});
+ } else {
+  if(!playerById(activeChat)){toast("Ce joueur a quitté la partie.");return}
+  emit("chat:private",{targetId:activeChat,text});
+  pushChat(activeChat,{kind:"out",text,at:Date.now()});
+ }
  $("phoneInput").value="";
 }
 $("phoneSend").addEventListener("click",sendChat);
 $("phoneInput").addEventListener("keydown",e=>{if(e.key==="Enter")sendChat()});
+$("phoneBack").addEventListener("click",()=>{activeChat=null;renderPhone()});
 $("phoneClose").addEventListener("click",()=>{phoneOpen=false;phone.classList.remove("open")});
 $("chatToggle").addEventListener("click",()=>{
- if(phone.classList.contains("docked")){phone.scrollIntoView({behavior:"smooth",block:"center"});$("phoneInput").focus();return}
+ if(phone.classList.contains("docked")){phone.scrollIntoView({behavior:"smooth",block:"center"});return}
  phoneOpen=!phoneOpen;phone.classList.toggle("open",phoneOpen&&hasJoined);
- if(phoneOpen)$("phoneInput").focus();
+ if(phoneOpen){renderPhone()}
 });
+
+/* ---------- Éditeur de personnage ---------- */
+const SKIN_TONES=["#ffdbc2","#f2c9a3","#e0ac80","#c68b5e","#a56a43","#8a5a3c","#5e3b27"];
+const HAIR_TONES=["#17110e","#3a2a1c","#6b3f26","#d9622b","#e8c35a","#ff6fb5","#7a4fe0","#3c9bff","#2ec4b6","#cfd4e6"];
+let draft=null;
+function editAllowed(){return !hasJoined||!currentRoom||["lobby","results","finished"].includes(currentRoom.status)}
+function refreshEditorPreview(){createMonsterScene($("edCanvas"),{...draft})}
+function swatchRow(box,tones,current,onPick){
+ box.innerHTML="";
+ const def=document.createElement("button");def.className="swatch"+(!current?" sel":"");def.textContent="↺";def.title="Par défaut";
+ def.style.background="#fff";def.addEventListener("click",()=>onPick(null));box.appendChild(def);
+ tones.forEach(t=>{
+  const b=document.createElement("button");b.className="swatch"+(current===t?" sel":"");b.style.background=t;b.title=t;
+  b.addEventListener("click",()=>onPick(t));box.appendChild(b);
+ });
+}
+function buildEditor(){
+ const cg=$("edChars");cg.innerHTML="";
+ MONSTERS.forEach(m=>{
+  const b=document.createElement("button");b.className="char-btn"+(m.id===draft.monsterId?" sel":"");
+  b.innerHTML=`<span>${m.emoji}</span>${escapeHTML(m.name)}`;
+  b.addEventListener("click",()=>{draft.monsterId=m.id;draft.color=m.color;draft.skin=null;draft.hair=null;buildEditor()});
+  cg.appendChild(b);
+ });
+ $("edColor").value=/^#[0-9a-fA-F]{6}$/.test(draft.color)?draft.color:"#3c9bff";
+ swatchRow($("edSkin"),SKIN_TONES,draft.skin,v=>{draft.skin=v;buildEditor()});
+ swatchRow($("edHair"),HAIR_TONES,draft.hair,v=>{draft.hair=v;buildEditor()});
+ const ag=$("edAcc");ag.innerHTML="";
+ const addAcc=(id,emoji,name,locked)=>{
+  const b=document.createElement("button");b.className="acc-btn"+(draft.accessory===id?" sel":"");
+  b.innerHTML=`<span>${emoji}</span>${escapeHTML(name)}${locked?" 🔒":""}`;
+  b.disabled=!!locked;
+  b.addEventListener("click",()=>{draft.accessory=id;buildEditor()});
+  ag.appendChild(b);
+ };
+ addAcc("none","🚫","Aucun",false);
+ shopItems.forEach(item=>{
+  const ok=FREE_ACCESSORIES.includes(item.id)||ownedItems.includes(item.id);
+  addAcc(item.id,COSMETIC_EMOJIS[item.id]||"🎁",item.name,!ok);
+ });
+ $("edHint").textContent=editAllowed()?"Les accessoires 🔒 s'achètent dans la boutique.":"Tu pourras enregistrer entre deux manches (salon ou résultats).";
+ refreshEditorPreview();
+}
+function openEditor(){
+ draft={monsterId:selectedMonster.id,color:customColor,accessory,skin:customSkin,hair:customHair};
+ $("editorModal").classList.add("open");
+ buildEditor();
+}
+function closeEditor(){
+ $("editorModal").classList.remove("open");
+ const rec=rendererRecords.get($("edCanvas"));if(rec)disposeRecord(rec,false);
+}
+function saveEditor(){
+ if(!editAllowed()){toast("Tu peux modifier ton personnage entre les manches.");return}
+ selectedMonster=findMonster(draft.monsterId);customColor=draft.color;accessory=draft.accessory;
+ customSkin=draft.skin;customHair=draft.hair;
+ $("avatarColor").value=/^#[0-9a-fA-F]{6}$/.test(customColor)?customColor:"#8b6cff";
+ refreshAccessorySelect();
+ if(currentView==="home"){renderAvatarPicker();refreshPreview()}
+ emit("avatar:update",{avatar:currentAvatar()});
+ closeEditor();toast("Personnage enregistré !");
+}
+$("edColor").addEventListener("input",e=>{if(!draft)return;draft.color=e.target.value;refreshEditorPreview()});
+$("edSave").addEventListener("click",saveEditor);
+$("edCancel").addEventListener("click",closeEditor);
+$("edClose").addEventListener("click",closeEditor);
+$("edReset").addEventListener("click",()=>{
+ const m=findMonster(draft.monsterId);draft.color=m.color;draft.skin=null;draft.hair=null;draft.accessory="none";buildEditor();
+});
+$("editorModal").addEventListener("click",e=>{if(e.target===$("editorModal"))closeEditor()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("editorModal").classList.contains("open"))closeEditor()});
+["editHomeBtn","editLobbyBtn","editResultsBtn"].forEach(id=>$(id).addEventListener("click",openEditor));
+$("menuEdit").addEventListener("click",()=>{$("settingsMenu").classList.remove("open");openEditor()});
 
 /* ---------- Interface hôte, réglages ---------- */
 function updateHostUI(){
@@ -1405,7 +1605,8 @@ if(socket){
   $("lobbyCode").textContent=roomCode;
   resetLocalRound();
   isReady=false;$("readyBtn").textContent="Je suis prêt ✓";
-  chatHistory.length=0;renderChat();
+  Object.keys(chatStore).forEach(k=>delete chatStore[k]);chatStore.all=[];
+  Object.keys(unread).forEach(k=>delete unread[k]);activeChat=null;phoneAvKey="";updateChatBadge();renderPhone();
   updateHostUI();
   showView("lobby");toast("Salon rejoint !");
  });
@@ -1416,7 +1617,7 @@ if(socket){
   currentRound=room.round||currentRound;
   maxRounds=room.maxRounds||maxRounds;
   const players=room.players||[];
-  renderChatRecipients(players);
+  renderPhone();
   isHost=room.hostId===playerId;
   const me=players.find(p=>p.id===playerId);
   if(me){
@@ -1428,6 +1629,7 @@ if(socket){
     selectedMonster=findMonster(me.avatar.monsterId);
     customColor=me.avatar.color||selectedMonster.color;
     accessory=me.avatar.accessory||"none";
+    customSkin=me.avatar.skin||null;customHair=me.avatar.hair||null;
     $("avatarColor").value=/^#[0-9a-fA-F]{6}$/.test(customColor)?customColor:"#8b6cff";
     if(currentView==="home")refreshPreview();
    }
@@ -1531,12 +1733,17 @@ if(socket){
  });
  socket.on("power:friend-request",data=>toast(`📞 ${data.from} fait appel à toi !`));
  socket.on("power:spy-result",data=>toast("🕵️ "+(data.message||"")));
- socket.on("chat:private",data=>pushChat({kind:"in",name:`✉️ ${data.from||"Joueur"}`,text:String(data.text||""),at:Date.now()}));
+ socket.on("chat:private",data=>{
+  const key=data.fromId||(currentRoom?.players||[]).find(p=>p.name===data.from)?.id||"all";
+  const showing=phoneVisible()&&activeChat===key;
+  pushChat(key,{kind:"in",name:data.from,text:String(data.text||""),at:Date.now()});
+  if(!showing)toast(`✉️ Message privé de ${data.from||"Joueur"}`);
+ });
  socket.on("chat:private:notice",msg=>toast(String(msg)));
  socket.on("chat:message",data=>{
-  if(data.system){pushChat({kind:"sys",text:String(data.text||""),at:data.at});return}
-  const mine=myPlayer()?.name===data.name;
-  pushChat({kind:mine?"out":"in",name:data.name,text:String(data.text||""),at:data.at});
+  if(data.system){pushChat("all",{kind:"sys",text:String(data.text||""),at:data.at});return}
+  const mine=data.id?data.id===playerId:myPlayer()?.name===data.name;
+  pushChat("all",{kind:mine?"out":"in",name:data.name,text:String(data.text||""),at:data.at});
  });
  socket.on("app:error",data=>{
   if(buyPending.size){buyPending.clear();renderShop();renderPowersPanel()}
@@ -1545,6 +1752,7 @@ if(socket){
 }
 
 $("chatToggle").style.display="none";
+renderPhone();
 renderAvatarPicker();refreshPreview();refreshAccessorySelect();
 renderPicked([],8);renderShop();renderPowersPanel();updatePowerPill();
 setCoins(0);
