@@ -233,12 +233,69 @@ p {line-height:1.6}
  .player{padding:8px;gap:8px}
  .player canvas{width:48px;height:48px}
 }
+
+
+/* ALPHA BLITZ — direction artistique inspirée de l'image de référence */
+:root{
+ --bg:#f5b8e8;--card:#fff3df;--ink:#111c70;--muted:#6d78bd;
+ --purple:#5633d7;--pink:#ff5ca8;--blue:#38a9ff;--green:#42d9bb;--yellow:#ffcb43;
+ --shadow:0 7px 0 #2b2479,0 12px 24px #25145b35;
+}
+html{background:#302080}
+body{
+ color:var(--ink);font-family:"Trebuchet MS",system-ui,sans-serif;
+ background:radial-gradient(ellipse at 15% 8%,#ffdaef 0,transparent 24%),radial-gradient(ellipse at 85% 15%,#a6cfff 0,transparent 28%),linear-gradient(135deg,#8b6bff 0%,#f8b5df 46%,#ffcf91 100%);
+ background-attachment:fixed;min-height:100vh;position:relative;overflow-x:hidden
+}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.23;background-image:radial-gradient(#fff 1.5px,transparent 1.5px);background-size:22px 22px;z-index:-1}
+.topbar{max-width:1500px;padding:14px 22px;background:linear-gradient(180deg,#30207f,#4e35c8);border:3px solid #17145d;border-radius:0 0 24px 24px;box-shadow:0 7px 0 #21155f;color:white}
+.brand{font-weight:1000;font-size:clamp(18px,2.3vw,27px);text-shadow:0 2px 0 #20145e;letter-spacing:-.5px}
+.brand-icon{border:3px solid white;border-radius:16px;background:linear-gradient(135deg,#ffce49,#ff5fa7);box-shadow:0 4px 0 #21155f;color:#fff}
+.gradient-text{background:linear-gradient(90deg,#ffe56b,#ff91ce);background-clip:text;color:transparent}
+.pill{background:#39278f;color:white;border:2px solid #a9a0ff;box-shadow:0 4px 0 #1c155b;padding:9px 15px}
+main{max-width:1500px;padding:22px clamp(12px,2vw,28px) 48px}
+.panel{background:linear-gradient(145deg,#fff9ed,#ffe8cf);border:3px solid #e6a86b;border-radius:24px;box-shadow:0 6px 0 #75449c,0 12px 28px #2b1d7040;padding:clamp(15px,2vw,25px)}
+h1,h2,h3{color:#121d70;text-shadow:0 1px 0 #fff;font-weight:1000}
+h1{letter-spacing:-1.5px}
+.btn{border:2px solid #fff;border-radius:16px;box-shadow:0 5px 0 #302078;font-weight:1000;transition:transform .12s,box-shadow .12s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 7px 0 #302078}
+.primary{background:linear-gradient(135deg,#368fff,#6550ff);color:white}
+.pink{background:linear-gradient(135deg,#ff5aa5,#ff8bc5);color:#fff}
+.green{background:linear-gradient(135deg,#35d6b5,#8ae9c9);color:#103d66}
+.yellow{background:linear-gradient(135deg,#ffcb43,#ffe78d);color:#4c2b79}
+.light{background:linear-gradient(135deg,#fff,#e5e3ff);color:#3d2b99}
+.danger{background:#ffe1e9;color:#a32360}
+.field input,.field select,.chat-input,input,select{border:2px solid #b9baff;border-radius:14px;background:#fffaf2;color:#171d6b;box-shadow:inset 0 2px 0 #eee5ff}
+.field label{color:#55429e}
+.badge{background:#ffdf79;color:#4b2c7b;border:1px solid #fff}
+.avatar-option{background:linear-gradient(145deg,#d9f5ff,#fff0f8);border:2px solid #6bbdff;border-radius:17px;box-shadow:0 3px 0 #7d5cd4;color:#18226e}
+.avatar-option.selected{background:linear-gradient(145deg,#ffeb8e,#ffc6e5);border-color:#ff5ca8;box-shadow:0 3px 0 #9b3b9d}
+.stage{background:linear-gradient(135deg,#d7eaff,#ffe1f0 55%,#fff0b9);border:2px solid #7f6bff;border-radius:22px;box-shadow:inset 0 0 0 3px #ffffff80;min-height:240px}
+.player,.room-player,.result-row{border:2px solid #a8a4ff!important;border-radius:18px!important;background:linear-gradient(135deg,#fff8ed,#e5e9ff)!important;box-shadow:0 3px 0 #7860ce}
+.chat-log,.chat-box{background:linear-gradient(180deg,#fff8ee,#f2edff);border:2px solid #b9b1ff;border-radius:18px}
+.view.active{animation:popIn .24s ease}
+@keyframes popIn{from{opacity:0;transform:translateY(5px) scale(.995)}to{opacity:1;transform:none}}
+/* Grille façon cartes illustrées, utilisable à la souris et au tactile */
+.grid{gap:16px}
+@media(min-width:900px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.avatar-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:700px){
+ .topbar{border-radius:0 0 18px 18px;padding:10px 12px;gap:8px}
+ main{padding:12px 10px 30px}
+ .panel{border-radius:18px;padding:13px!important;margin:11px 0}
+ .grid{grid-template-columns:minmax(0,1fr);gap:10px}
+ .avatar-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+ .avatar-option canvas{height:75px}
+ .btn{min-height:44px;padding:11px 13px}
+ h1{font-size:clamp(28px,9vw,44px)}
+ .stage{min-height:170px}
+}
+
 </style>
 </head>
 
 <body>
 <header class="topbar">
-  <div class="brand"><div class="brand-icon">👾</div><div>ALPHA <span class="gradient-text">BLITZ</span><div class="muted" style="font-size:11px;letter-spacing:1px">LE BAC À SABLE</div></div></div>
+  <div class="brand"><div class="brand-icon">👑</div><div>ALPHA <span class="gradient-text">BLITZ</span><div class="muted" style="font-size:11px;letter-spacing:1px">LE BAC À SABLE</div></div></div>
   <div class="pill">🪙 <span id="coinCount">0</span></div>
 </header>
 
