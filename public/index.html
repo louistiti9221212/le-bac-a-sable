@@ -206,7 +206,16 @@ p {line-height:1.6}
 .phone-head h2{font-size:20px;margin:3px 0}
 .phone-panel .chat-log{max-height:300px;min-height:150px;overflow-y:auto}
 .phone-close{background:#f0edff;color:#5b48bf;border-radius:12px;padding:8px 11px;font-weight:900}
-@media(max-width:480px){.phone-fab{right:12px;bottom:12px;width:56px;height:56px}.phone-panel{right:8px;bottom:78px}}
+@media(max-width:480px){
+  .phone-fab{right:12px;bottom:calc(12px + env(safe-area-inset-bottom, 0px));width:58px;height:58px;min-width:58px;min-height:58px;display:none;touch-action:manipulation;pointer-events:auto}
+  .phone-fab.visible{display:flex!important}
+  .phone-panel{left:8px;right:8px;bottom:calc(80px + env(safe-area-inset-bottom, 0px));width:auto;max-width:none;max-height:72dvh;min-height:0;padding:12px;z-index:10001;overflow:hidden}
+  .phone-panel.open{display:flex!important;pointer-events:auto}
+  .phone-panel .chat-log{flex:1;min-height:100px;max-height:none;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .phone-panel .chat-form{display:flex;gap:6px;flex-shrink:0}
+  .phone-panel .chat-form input{min-width:0;width:0;flex:1;font-size:16px;padding:12px 10px;touch-action:manipulation}
+  .phone-panel .chat-form button,.phone-close{min-height:44px;touch-action:manipulation}
+}
 
 </style>
 </head>
@@ -457,6 +466,11 @@ function toast(msg) {
 function viewForStatus(status) {
  return ({lobby:"lobby",countdown:"countdownView",roulette:"rouletteView",playing:"gameView",voting:"voteView",results:"resultsView",finished:"finishedView"})[status]||"home";
 }
+function syncPhoneVisibility() {
+ const fab=$("phoneFab");
+ if(!fab)return;
+ fab.classList.toggle("visible",!!hasJoined && currentView!=="home");
+}
 function showView(id) {
  if(currentView==="home"&&id!=="home"){
   // On libère les scènes 3D de l'accueil (12 monstres + aperçu) pour économiser les contextes WebGL.
@@ -465,9 +479,9 @@ function showView(id) {
  }
  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
  $(id).classList.add("active");
- $("phoneFab").classList.toggle("visible",!!hasJoined && id!=="home");
  const wasHome=currentView==="home";
  currentView=id;
+ syncPhoneVisibility();
  if(id==="home"&&!wasHome){renderAvatarPicker();refreshPreview()}
 }
 function emit(event,payload={}) {
@@ -1117,6 +1131,7 @@ if(socket) {
   $("phoneChatLog").innerHTML="";
   $("phoneFab").classList.add("visible");
   $("phonePanel").classList.remove("open");
+  syncPhoneVisibility();
   updateHostUI();
   showView("lobby");toast("Salon rejoint !");
  });
