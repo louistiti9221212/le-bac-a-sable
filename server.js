@@ -45,6 +45,7 @@ const CATEGORIES = [
 
 const THEMES_PER_ROUND = 8;
 const SPIN_TIMEOUT = 10000;
+// Laisse le temps à l'animation du navigateur de se terminer avant la roulette suivante.
 const NEXT_SPIN_DELAY = 3200;
 const COUNTDOWN_MS = 3000;
 const VOTE_STEP_TIMEOUT = 25000;
@@ -61,11 +62,9 @@ const MONSTER_IDS = [
   "voltix", "goutti", "rococo", "fantomix", "zouzou", "arc-en-boum"
 ];
 
-const ACCESSORIES = [
-  "none", "crown", "glasses", "hat", "star",
-  "pizza", "birthday", "bcdshirt"
-];
+const ACCESSORIES = ["none", "crown", "glasses", "hat", "star", "pizza", "birthday", "bcdshirt"];
 
+/* Boutique 1 : cosmétiques (permanents pendant la partie, un seul exemplaire). */
 const COSMETICS = [
   { id: "crown", name: "Couronne", price: 0 },
   { id: "glasses", name: "Lunettes", price: 0 },
@@ -76,6 +75,7 @@ const COSMETICS = [
   { id: "bcdshirt", name: "T-shirt B C D", price: 0 }
 ];
 
+/* Boutique 2 : pouvoirs (consommables). "available:false" = pas encore jouable. */
 const POWERS = [
   { id: "friend", name: "📞 Appel à un ami", price: 30, available: true },
   { id: "double", name: "✨ Multiplicateur", price: 55, available: true },
@@ -118,6 +118,7 @@ function safeAvatar(input, ownedCosmetics = []) {
     color: /^#[0-9a-fA-F]{6}$/.test(avatar.color || "")
       ? avatar.color
       : "#8b6cff",
+    // Tous les accessoires sont débloqués et utilisables gratuitement.
     accessory
   };
 }
@@ -287,6 +288,7 @@ function saveRoom(room) {
   return current;
 }
 
+// Regroupe les sauvegardes rapprochées (évite une réécriture complète à chaque événement).
 function scheduleSave(room) {
   if (!supabase || !room || room.saveTimer) return;
   room.saveTimer = setTimeout(() => {
@@ -432,7 +434,7 @@ function startCountdown(room) {
   }, COUNTDOWN_MS);
 }
 
-/* ---------- ROULETTE À 8 THÈMES ---------- */
+/* ---------- ROULETTE À 8 THÈMES (autoritaire côté serveur) ---------- */
 
 function startRoulette(room) {
   stopTimers(room);
@@ -450,6 +452,8 @@ function startRoulette(room) {
   spinNextTheme(room);
 }
 
+// Désigne le joueur suivant dans l'ordre fixé au début de la roulette,
+// en sautant ceux qui ont quitté la salle.
 function pickSpinner(room) {
   const order = room.spinOrder || [];
   for (let k = 0; k < order.length; k++) {
@@ -491,6 +495,7 @@ function spinNextTheme(room) {
   const spinId = room.spinId;
 
   room.spinnerId = spinner.id;
+  // Le thème est décidé ici, par le serveur, et jamais par un navigateur.
   room.pendingTheme = randomItem(available);
 
   const index = room.selectedThemes.length + 1;
@@ -513,6 +518,7 @@ function spinNextTheme(room) {
     `${spinner.name} doit arrêter la roulette (${index}/${THEMES_PER_ROUND}).`
   );
 
+  // Si le joueur ne clique pas à temps, le serveur valide automatiquement le thème.
   room.rouletteTimer = setTimeout(() => {
     if (room.status === "roulette" && room.spinId === spinId && room.pendingTheme) {
       acceptPendingTheme(room, true, spinId);
@@ -528,9 +534,11 @@ function acceptPendingTheme(room, automatic = false, spinId = undefined) {
   room.rouletteTimer = null;
 
   const theme = room.pendingTheme;
+  // On consomme le thème tout de suite : un second clic ou un événement en double ne fera rien.
   room.pendingTheme = null;
   room.spinnerId = null;
 
+  // Sécurité : un thème ne peut apparaître qu'une fois dans la manche.
   if (room.selectedThemes.includes(theme)) {
     room.spinIndex++;
     spinNextTheme(room);
@@ -538,6 +546,7 @@ function acceptPendingTheme(room, automatic = false, spinId = undefined) {
   }
 
   room.selectedThemes.push(theme);
+  // Le joueur suivant devra arrêter la prochaine roulette.
   room.spinIndex++;
 
   const index = room.selectedThemes.length;
@@ -645,6 +654,7 @@ function startVoting(room) {
   stopTimers(room);
   room.status = "voting";
   room.votes = new Map();
+  // On ne soumet au vote que les joueurs qui ont au moins une réponse.
   room.votePlayers = [...room.players.values()]
     .filter(p => hasAnswers(room, p.id))
     .map(p => p.id);
@@ -690,6 +700,7 @@ function presentVoteTarget(room) {
   setVoteTimer(room);
 }
 
+// Fait avancer le vote. expectedIndex protège contre les clics ou événements en double.
 function advanceVote(room, expectedIndex) {
   if (room.status !== "voting") return;
   if (expectedIndex !== undefined && expectedIndex !== room.voteIndex) return;
@@ -725,6 +736,7 @@ function finishRound(room, timedOut = false) {
 }
 
 function finishVoting(room) {
+  // Garde : les résultats et les récompenses ne sont calculés qu'une seule fois.
   if (room.status !== "voting") return;
   stopTimers(room);
 
@@ -773,6 +785,7 @@ function finishVoting(room) {
 
     player.activePowers = player.activePowers.filter(x => x !== "double");
 
+    // Prime de participation (remplace l'ancien +10 ajouté par le navigateur).
     player.coins += ROUND_BONUS_COINS;
     earned += ROUND_BONUS_COINS;
 
@@ -828,6 +841,7 @@ function submitVote(socket, data = {}) {
     return sendError(socket, "Joueur introuvable.");
   }
 
+  // On ne vote que pour le joueur actuellement présenté.
   if (room.votePlayers[room.voteIndex] !== targetId) {
     return sendError(socket, "Ce joueur n'est pas (ou plus) soumis au vote.");
   }
@@ -918,11 +932,13 @@ function leaveRoom(socket) {
 
   const running = ["countdown", "roulette", "playing", "voting"].includes(room.status);
 
+  // Une partie à un seul joueur n'a pas de sens : retour au salon.
   if (running && room.players.size < 2) {
     resetToLobby(room, "Il ne reste plus assez de joueurs : retour au salon.");
     return;
   }
 
+  // Le joueur chargé d'arrêter la roulette est parti : on passe au suivant.
   if (wasActiveSpinner) {
     if (room.rouletteTimer) clearTimeout(room.rouletteTimer);
     room.rouletteTimer = null;
@@ -947,6 +963,7 @@ function leaveRoom(socket) {
       if (pos < room.voteIndex) {
         room.voteIndex--;
       } else if (pos === room.voteIndex) {
+        // Le joueur évalué est parti : on présente le suivant (ou on conclut).
         if (room.voteIndex >= room.votePlayers.length) finishVoting(room);
         else presentVoteTarget(room);
         return;
@@ -1123,6 +1140,7 @@ io.on("connection", socket => {
 
       const name = cleanName(data.name);
 
+      // Un joueur restauré depuis Supabase (id "offline_") peut être récupéré par son pseudo.
       const ghost = [...room.players.values()].find(
         p => p.id.startsWith("offline_") && norm(p.name) === norm(name)
       );
@@ -1205,7 +1223,7 @@ io.on("connection", socket => {
     if (!ACCESSORIES.includes(avatar.accessory)) {
       return sendError(socket, "Accessoire invalide.");
     }
-
+    // Les accessoires sont gratuits : pas de vérification de propriété.
     player.avatar = safeAvatar(avatar, ACCESSORIES);
     emitRoom(room);
   });
@@ -1219,6 +1237,7 @@ io.on("connection", socket => {
     }
     if (room.status !== "lobby") return;
 
+    // Les joueurs restaurés qui ne sont jamais revenus ne doivent pas bloquer la partie.
     purgeOfflinePlayers(room);
 
     if (room.players.size < 2) {
@@ -1239,12 +1258,14 @@ io.on("connection", socket => {
     startCountdown(room);
   });
 
+  // Seul le joueur désigné peut arrêter la roulette en cours.
+  // Le navigateur ne choisit jamais le thème : il demande seulement l'arrêt.
   socket.on("roulette:stop-request", (data = {}) => {
     const room = rooms.get(socket.data.roomCode);
     const player = playerForSocket(room, socket);
 
     if (!room || !player || room.status !== "roulette") return;
-    if (!room.pendingTheme) return;
+    if (!room.pendingTheme) return; // déjà validé : événement en double
     if (room.spinnerId !== player.id) {
       return sendError(socket, "C'est au joueur désigné d'arrêter la roulette.");
     }
@@ -1254,6 +1275,7 @@ io.on("connection", socket => {
     acceptPendingTheme(room, false, Number.isFinite(spinId) ? spinId : undefined);
   });
 
+  // Compatibilité avec l'ancien client : le thème envoyé par le navigateur est ignoré.
   socket.on("roulette:stop", () => {
     const room = rooms.get(socket.data.roomCode);
     const player = playerForSocket(room, socket);
@@ -1291,6 +1313,7 @@ io.on("connection", socket => {
 
   socket.on("answer:vote", data => submitVote(socket, data));
 
+  // Seul l'hôte fait avancer la phase de vote (un minuteur le fait aussi automatiquement).
   socket.on("vote:next-player", (data = {}) => {
     const room = rooms.get(socket.data.roomCode);
     const player = playerForSocket(room, socket);
@@ -1314,6 +1337,7 @@ io.on("connection", socket => {
     if (room.round >= room.maxRounds) {
       room.status = "finished";
 
+      // Prime de fin de partie, attribuée une seule fois (statut results -> finished).
       for (const p of room.players.values()) p.coins += FINISH_BONUS_COINS;
 
       emitRoom(room);
@@ -1348,22 +1372,21 @@ io.on("connection", socket => {
 
     if (cosmetic) {
       if (player.cosmetics.includes(id)) {
+        // Autorise simplement à rééquiper un cosmétique déjà débloqué.
         player.avatar = safeAvatar({ ...player.avatar, accessory: id }, ACCESSORIES);
         emitRoom(room);
         return socket.emit("shop:bought", {
-          kind: "cosmetic",
-          itemId: id,
-          coins: player.coins,
+          kind: "cosmetic", itemId: id, coins: player.coins,
           message: "Accessoire équipé !"
         });
       }
-
       if (player.coins < item.price) {
         return sendError(socket, "Pas assez de pièces.");
       }
 
       player.coins -= item.price;
       player.cosmetics.push(id);
+      // L'accessoire acheté est équipé immédiatement.
       player.avatar = safeAvatar(
         { ...player.avatar, accessory: id },
         player.cosmetics
