@@ -176,7 +176,10 @@ p {line-height:1.6}
 .chat-log {max-height:150px;overflow:auto;background:#faf9ff;border-radius:13px;padding:10px;font-size:13px;line-height:1.5}
 .chat-log .sys {color:var(--muted);font-style:italic}
 .chat-form {display:flex;gap:8px;margin-top:10px}
-.chat-form input {flex:1;padding:11px;border:2px solid #eeebfa;border-radius:12px;outline:none}
+.chat-form input {flex:1;min-width:0;padding:11px;border:2px solid #eeebfa;border-radius:12px;outline:none}
+.chat-form select{max-width:145px;min-width:105px;padding:9px 7px;border:2px solid #eeebfa;border-radius:12px;background:#fff;color:var(--ink);font-size:12px}
+.chat-recipient-label{display:block;font-size:12px;color:var(--muted);margin:8px 0 4px}
+@media(max-width:480px){.chat-form select{max-width:120px;min-width:95px;font-size:11px;padding:8px 4px}}
 .toast {position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#24213d;color:white;padding:13px 18px;border-radius:14px;z-index:99;max-width:90%;display:none}
 .footer {text-align:center;font-size:12px;color:var(--muted);padding:25px}
 @media(max-width:650px) {
@@ -280,7 +283,7 @@ p {line-height:1.6}
     <div class="panel">
       <h2>💬 Discussion</h2>
       <div class="chat-log" id="chatLog"></div>
-      <div class="chat-form"><input id="chatInput" maxlength="180" placeholder="Écris un message…" autocomplete="off"><button class="btn light" id="chatSend">Envoyer</button></div>
+      <label class="chat-recipient-label" for="chatRecipient">Envoyer à :</label><div class="chat-form"><select id="chatRecipient" aria-label="Choisir le destinataire"><option value="all">Tout le salon</option></select><input id="chatInput" maxlength="180" placeholder="Écris un message…" autocomplete="off"><button class="btn light" id="chatSend">Envoyer</button></div>
     </div>
   </section>
 
@@ -369,7 +372,7 @@ p {line-height:1.6}
   <div class="phone-head"><h2>📱 Téléphone des joueurs</h2><button id="phoneClose" class="phone-close" aria-label="Fermer">✕</button></div>
   <p class="muted" style="margin:0;font-size:12px">Envoie un message aux joueurs de ton salon.</p>
   <div id="phoneChatLog" class="chat-log" aria-live="polite"></div>
-  <div class="chat-form"><input id="phoneChatInput" maxlength="180" placeholder="Écris un message…" autocomplete="off"><button id="phoneChatSend" class="btn primary">Envoyer</button></div>
+  <label class="chat-recipient-label" for="phoneChatRecipient">Envoyer à :</label><div class="chat-form"><select id="phoneChatRecipient" aria-label="Choisir le destinataire"><option value="all">Tout le salon</option></select><input id="phoneChatInput" maxlength="180" placeholder="Écris un message…" autocomplete="off"><button id="phoneChatSend" class="btn primary">Envoyer</button></div>
 </section>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -1078,11 +1081,25 @@ $("backFromShop").addEventListener("click",()=>{
 });
 $("homeBtn").addEventListener("click",()=>location.reload());
 
+function renderChatRecipients(players=[]) {
+ ["chatRecipient","phoneChatRecipient"].forEach(id=>{
+  const select=$(id); if(!select)return;
+  const previous=select.value||"all";
+  select.innerHTML="";
+  const all=document.createElement("option");all.value="all";all.textContent="Tout le salon";select.appendChild(all);
+  players.filter(p=>p.id&&p.id!==playerId).forEach(p=>{
+   const option=document.createElement("option");option.value=p.id;option.textContent=p.name||p.player_name||"Joueur";select.appendChild(option);
+  });
+  select.value=[...select.options].some(o=>o.value===previous)?previous:"all";
+ });
+}
 function sendChat(inputId="chatInput") {
  const text=$(inputId).value.trim();
  if(!text)return;
- if(!roomCode){toast("Rejoins un salon pour utiliser le téléphone.");return}
- emit("chat:send",{text,code:roomCode});
+ if(!roomCode){toast("Rejoins un salon pour envoyer un message.");return}
+ const recipientId=$(inputId==="phoneChatInput"?"phoneChatRecipient":"chatRecipient").value;
+ if(recipientId&&recipientId!=="all") emit("chat:private",{targetId:recipientId,text});
+ else emit("chat:send",{text,code:roomCode});
  $(inputId).value="";
 }
 $("chatSend").addEventListener("click",()=>sendChat("chatInput"));
@@ -1142,6 +1159,7 @@ if(socket) {
   currentRound=room.round||currentRound;
   maxRounds=room.maxRounds||maxRounds;
   const players=room.players||[];
+  renderChatRecipients(players);
   isHost=room.hostId===playerId;
   const me=players.find(p=>p.id===playerId);
   if(me){
