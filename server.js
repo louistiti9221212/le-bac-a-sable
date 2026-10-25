@@ -40,7 +40,24 @@ const CATEGORIES = [
   "Loisir", "Instrument de musique", "Plat", "Boisson", "Film",
   "Série", "Jeu vidéo", "Personnage fictif", "Célébrité",
   "Véhicule", "Matière scolaire", "Matériau",
-  "Partie du corps", "Émotion"
+  "Partie du corps", "Émotion",
+  // ---- 75 thèmes supplémentaires ----
+  "Métier de santé", "Métier du bâtiment", "Sport d'équipe", "Sport individuel", "Sport d'hiver",
+  "Danse", "Genre de musique", "Chanson", "Groupe de musique", "Dessin animé",
+  "Bande dessinée", "Super-héros", "Méchant de film", "Film d'animation", "Acteur",
+  "Chanteur", "Influenceur", "Journal", "Émission de télé", "Jeu de société",
+  "Jeu de cartes", "Jouet", "Dessert", "Gâteau", "Bonbon",
+  "Fromage", "Épice", "Herbe aromatique", "Céréale", "Fast-food",
+  "Arbre fruitier", "Baie", "Fruit sec", "Boisson chaude", "Cocktail",
+  "Plat italien", "Plat asiatique", "Spécialité française", "Pays d'Afrique", "Pays d'Asie",
+  "Pays d'Europe", "Ville française", "Monument", "Fleuve", "Montagne",
+  "Mer ou océan", "Île", "Langue", "Monnaie", "Personnalité politique",
+  "Personnage historique", "Invention", "Découverte scientifique", "Planète", "Constellation",
+  "Phénomène météo", "Catastrophe naturelle", "Dinosaure", "Oiseau", "Insecte",
+  "Poisson", "Arbre", "Meuble", "Appareil électroménager", "Outil",
+  "Ustensile de cuisine", "Vêtement d'hiver", "Chaussure", "Bijou", "Cosmétique",
+  "Coiffure", "Émotion négative", "Qualité", "Défaut", "Verbe d'action",
+  "Adjectif", "Onomatopée", "Mot rigolo", "Animal sauvage", "Animal domestique"
 ];
  
 const THEMES_PER_ROUND = 8;
@@ -48,7 +65,7 @@ const SPIN_TIMEOUT = 10000;
 // Laisse le temps à l'animation du navigateur de se terminer avant la roulette suivante.
 const NEXT_SPIN_DELAY = 3200;
 const COUNTDOWN_MS = 3000;
-const VOTE_STEP_TIMEOUT = 25000;
+// Plus de limite de temps pendant le vote : tous les joueurs doivent valider.
 const MAX_PLAYERS = 8;
 const START_COINS = 50;
 const ROUND_BONUS_COINS = 10;
@@ -653,13 +670,34 @@ function hasAnswers(room, playerId) {
   return activeCategories(room).some(c => String(answers[c] || "").trim());
 }
  
-function setVoteTimer(room) {
-  if (room.voteTimer) clearTimeout(room.voteTimer);
-  const expected = room.voteIndex;
-  room.voteTimer = setTimeout(
-    () => advanceVote(room, expected),
-    VOTE_STEP_TIMEOUT
+/* Plus de minuteur pendant le vote : on avance uniquement quand
+   tous les joueurs ont voté sur toutes les réponses non vides du joueur évalué. */
+function votersFor(room, targetId) {
+  return [...room.players.values()]
+    .filter(p => p.id !== targetId && !p.id.startsWith("offline_"))
+    .map(p => p.id);
+}
+
+function allVotesReceived(room) {
+  if (room.status !== "voting") return false;
+  const targetId = room.votePlayers[room.voteIndex];
+  if (!targetId) return false;
+
+  const voters = votersFor(room, targetId);
+  if (!voters.length) return false;
+
+  const answers = room.submissions.get(targetId) || {};
+
+  // Catégories à évaluer : celles du joueur évalué qui ne sont pas vides.
+  const toVote = activeCategories(room).filter(
+    c => String(answers[c] || "").trim()
   );
+  if (!toVote.length) return true;
+
+  return toVote.every(c => {
+    const ballot = room.votes.get(`${targetId}:${c}`);
+    return ballot && voters.every(v => ballot.has(v));
+  });
 }
  
 function startVoting(room) {
@@ -687,12 +725,10 @@ function startVoting(room) {
     players,
     player: players[0],
     index: 0,
-    total: room.votePlayers.length,
-    duration: VOTE_STEP_TIMEOUT
+    total: room.votePlayers.length
   });
   emitRoom(room);
-  system(room, "La phase de vote commence !");
-  setVoteTimer(room);
+  system(room, "La phase de vote commence ! On passe au joueur suivant quand tous ont voté.");
 }
  
 function presentVoteTarget(room) {
@@ -705,11 +741,9 @@ function presentVoteTarget(room) {
   io.to(room.code).emit("vote:player", {
     player: publicVotePlayer(room, target),
     index: room.voteIndex,
-    total: room.votePlayers.length,
-    duration: VOTE_STEP_TIMEOUT
+    total: room.votePlayers.length
   });
   emitRoom(room);
-  setVoteTimer(room);
 }
  
 // Fait avancer le vote. expectedIndex protège contre les clics ou événements en double.
@@ -888,8 +922,14 @@ function submitVote(socket, data = {}) {
     accept: yes,
     reject: no
   });
- 
+
   scheduleSave(room);
+
+  // Tous les joueurs ont voté sur toutes les réponses : on passe à la suite.
+  if (allVotesReceived(room)) {
+    system(room, "Tous les joueurs ont voté ! On passe au suivant.");
+    advanceVote(room, room.voteIndex);
+  }
 }
  
 /* ---------- SALONS ET JOUEURS ---------- */
@@ -1341,6 +1381,12 @@ io.on("connection", socket => {
     }
  
     const expected = Number.isInteger(data?.index) ? data.index : undefined;
+
+    // Sans minuteur, l'hôte ne peut passer que si tous les joueurs ont voté.
+    if (!allVotesReceived(room)) {
+      return sendError(socket, "Attends que tous les joueurs aient voté.");
+    }
+
     advanceVote(room, expected);
   });
  
@@ -1575,4 +1621,3 @@ startServer().catch(error => {
   console.error("Erreur de démarrage :", error);
   process.exit(1);
 });
- 
