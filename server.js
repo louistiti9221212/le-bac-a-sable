@@ -1525,20 +1525,18 @@ io.on("connection", socket => {
     if (!player || !target || !message) return;
     if (throttled(socket, "private", 400)) return;
 
-    if (target.shield) {
-      target.shield = false;
-      socket.emit("chat:private:notice", "Le bouclier a bloqué le message.");
-      io.to(target.id).emit(
-        "chat:private:notice",
-        "Ton bouclier a bloqué un pouvoir."
-      );
-      emitRoom(room);
+    // Les messages privés sont du chat : ils ne doivent pas être bloqués par le bouclier de jeu.
+    const targetSocket = io.sockets.sockets.get(target.id);
+    if (!targetSocket || !targetSocket.connected) {
+      socket.emit("chat:private:notice", `Impossible d'envoyer le message : ${target.name} n'est plus connecté.`);
       return;
     }
 
-    io.to(target.id).emit("chat:private", {
+    targetSocket.emit("chat:private", {
       from: player.name,
-      text: message
+      fromId: player.id,
+      text: message,
+      at: Date.now()
     });
 
     socket.emit(
